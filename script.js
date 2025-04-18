@@ -1,28 +1,73 @@
-let familyData = {};
+async function loadFamilyTree() {
+  const response = await fetch('data.json');
+  const people = await response.json();
 
-fetch('data.json')
-  .then(res => res.json())
-  .then(data => {
-    familyData = data;
-    buildTree(); // build the UI after loading data
-  });
-
-function buildTree() {
   const treeContainer = document.getElementById('tree');
-  const ul = document.createElement('ul');
 
-  for (const id in familyData) {
-    const person = familyData[id];
-    const fullName = `${person.name.first} ${person.name.middle || ''} ${person.name.last}`.trim();
-
-    const li = document.createElement('li');
-    const div = document.createElement('div');
-    div.textContent = fullName;
-    div.setAttribute('onclick', `showInfo(${id})`);
-
-    li.appendChild(div);
-    ul.appendChild(li);
+  // Step 1: Identify root people (no one lists them as a parent)
+  const isChild = new Set();
+  for (const id in people) {
+    const rel = people[id].relations;
+    if (rel.father) isChild.add(rel.father);
+    if (rel.mother) isChild.add(rel.mother);
   }
 
-  treeContainer.appendChild(ul);
+  const roots = Object.keys(people).filter(id => !isChild.has(parseInt(id)));
+
+  // Step 2: Build tree starting from roots
+  roots.forEach(rootId => {
+    const rootNode = buildTree(parseInt(rootId), people);
+    treeContainer.appendChild(rootNode);
+  });
 }
+
+function buildTree(id, people) {
+  const person = people[id];
+  if (!person) return document.createTextNode('Unknown');
+
+  const container = document.createElement('div');
+  container.className = 'tree-container';
+
+  const card = document.createElement('div');
+  card.className = 'person';
+
+  const img = document.createElement('img');
+  img.src = `images/${id}.png`;
+  img.alt = `${person.name.first}'s photo`;
+  img.onerror = () => {
+    img.src = 'images/default.png'; // fallback
+  };
+
+  const name = document.createElement('div');
+  name.innerHTML = `<strong>${person.name.first} ${person.name.last}</strong><br>Born: ${person.birth.year}`;
+
+  card.appendChild(img);
+  card.appendChild(name);
+  container.appendChild(card);
+
+  // Step 3: Build children recursively
+  const children = Object.entries(people)
+    .filter(([childId, p]) =>
+      p.relations.father === id || p.relations.mother === id
+    );
+
+  if (children.length > 0) {
+    const connector = document.createElement('div');
+    connector.className = 'connector';
+    container.appendChild(connector);
+
+    const childWrapper = document.createElement('div');
+    childWrapper.className = 'child-container';
+
+    children.forEach(([childId]) => {
+      const childTree = buildTree(parseInt(childId), people);
+      childWrapper.appendChild(childTree);
+    });
+
+    container.appendChild(childWrapper);
+  }
+
+  return container;
+}
+
+loadFamilyTree();
