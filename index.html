@@ -1,1 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Family Tree</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="tree">
+    <ul>
+      <li>
+        <div onclick="showInfo('grandparent')">👴 Grandparent</div>
+        <ul>
+          <li>
+            <div onclick="showInfo('parentA')">👨 Parent A</div>
+            <ul>
+              <li><div onclick="showInfo('childA1')">🧑 Child A1</div></li>
+              <li><div onclick="showInfo('childA2')">👩 Child A2</div></li>
+            </ul>
+          </li>
+          <li>
+            <div onclick="showInfo('parentB')">👩 Parent B</div>
+            <ul>
+              <li><div onclick="showInfo('childB1')">👶 Child B1</div></li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  </div>
 
+  <script src="script.js"></script>
+</body>
+</html>
