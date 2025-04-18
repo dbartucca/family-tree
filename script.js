@@ -32,10 +32,10 @@ function buildTree(id, people) {
   card.className = 'person';
 
   const img = document.createElement('img');
-  img.src = `images/${id}.png`;
+  img.src = `images/${id}.jfif`;
   img.alt = `${person.name.first}'s photo`;
   img.onerror = () => {
-    img.src = 'images/default.png'; // fallback
+    img.src = 'images/default.jfif'; // fallback
   };
 
   const name = document.createElement('div');
