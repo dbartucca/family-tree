@@ -1,23 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Family Tree</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <input type="text" id="search" placeholder="🔍 Search family..." onkeyup="filterTree()" />
-  <div class="tree" id="tree"></div>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f7f9fc;
+      margin: 0;
+      padding: 20px;
+    }
 
-  <!-- Modal for person info -->
-  <div id="infoModal" class="modal">
-    <div class="modal-content">
-      <span class="close" onclick="closeModal()">&times;</span>
-      <h2 id="modalName"></h2>
-      <p id="modalBio"></p>
-    </div>
-  </div>
+    .tree-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
 
-  <script src="script.js"></script>
-</body>
-</html>
+    .person {
+      background: white;
+      border: 2px solid #ccc;
+      border-radius: 10px;
+      padding: 10px;
+      margin: 10px;
+      text-align: center;
+      width: 160px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .person img {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #0077cc;
+      margin-bottom: 10px;
