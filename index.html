@@ -6,27 +6,20 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="tree">
-    <ul>
-      <li>
-        <div onclick="showInfo('grandparent')">👴 Grandparent</div>
-        <ul>
-          <li>
-            <div onclick="showInfo('parentA')">👨 Parent A</div>
-            <ul>
-              <li><div onclick="showInfo('childA1')">🧑 Child A1</div></li>
-              <li><div onclick="showInfo('childA2')">👩 Child A2</div></li>
-            </ul>
-          </li>
-          <li>
-            <div onclick="showInfo('parentB')">👩 Parent B</div>
-            <ul>
-              <li><div onclick="showInfo('childB1')">👶 Child B1</div></li>
-            </ul>
-          </li>
-        </ul>
-      </li>
-    </ul>
+  <input type="text" id="search" placeholder="🔍 Search family..." onkeyup="filterTree()" />
+
+  <!-- Tree container -->
+  <div class="tree" id="tree">
+    <!-- JS will insert HTML here -->
+  </div>
+
+  <!-- Modal -->
+  <div id="infoModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <h2 id="modalName"></h2>
+      <p id="modalBio"></p>
+    </div>
   </div>
 
   <script src="script.js"></script>
