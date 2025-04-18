@@ -7,13 +7,9 @@
 </head>
 <body>
   <input type="text" id="search" placeholder="🔍 Search family..." onkeyup="filterTree()" />
+  <div class="tree" id="tree"></div>
 
-  <!-- Tree container -->
-  <div class="tree" id="tree">
-    <!-- JS will insert HTML here -->
-  </div>
-
-  <!-- Modal -->
+  <!-- Modal for person info -->
   <div id="infoModal" class="modal">
     <div class="modal-content">
       <span class="close" onclick="closeModal()">&times;</span>
