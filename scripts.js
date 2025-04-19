@@ -104,38 +104,87 @@ function drawLines(data, positions) {
 
   canvas.width = document.body.scrollWidth;
   canvas.height = document.body.scrollHeight;
-
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  Object.keys(data).forEach(id => {
-    const person = data[id];
+  const drawnCouples = new Set();
+
+  Object.entries(data).forEach(([id, person]) => {
     const from = positions[id];
     if (!from) return;
 
-    ['mother', 'father'].forEach(role => {
-      const parentId = person.relations?.[role];
-      if (parentId && positions[parentId]) {
-        const to = positions[parentId];
-        ctx.beginPath();
-        ctx.moveTo(from.x, from.y);
-        ctx.lineTo(to.x, to.y);
-        ctx.strokeStyle = '#444';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-      }
-    });
-
     const spouseId = person.relations?.spouse;
-    if (spouseId && positions[spouseId]) {
-      const to = positions[spouseId];
+    const coupleKey = [id, spouseId].sort().join('-');
+
+    if (spouseId && positions[spouseId] && !drawnCouples.has(coupleKey)) {
+      const spousePos = positions[spouseId];
+
+      // 1. Draw line between spouses
       ctx.beginPath();
       ctx.moveTo(from.x, from.y);
-      ctx.lineTo(to.x, to.y);
+      ctx.lineTo(spousePos.x, spousePos.y);
       ctx.strokeStyle = '#00aa00';
       ctx.lineWidth = 1.5;
       ctx.setLineDash([5, 3]);
       ctx.stroke();
       ctx.setLineDash([]);
+      drawnCouples.add(coupleKey);
+
+      // 2. Midpoint between spouses
+      const midX = (from.x + spousePos.x) / 2;
+      const midY = (from.y + spousePos.y) / 2;
+
+      // 3. Collect all children of this couple
+      const children = Object.entries(data)
+        .filter(([cid, c]) => {
+          const m = c.relations?.mother;
+          const f = c.relations?.father;
+          return [m, f].includes(id) && [m, f].includes(spouseId);
+        });
+
+      if (children.length) {
+        // 4. Draw vertical line from midpoint to child level
+        const childY = positions[children[0][0]].y; // assume same Y for all kids
+        ctx.beginPath();
+        ctx.moveTo(midX, midY);
+        ctx.lineTo(midX, childY - 40); // above children
+        ctx.strokeStyle = '#444';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // 5. Horizontal line connecting children
+        const childXs = children.map(([cid]) => positions[cid].x);
+        const minX = Math.min(...childXs);
+        const maxX = Math.max(...childXs);
+        ctx.beginPath();
+        ctx.moveTo(minX, childY - 40);
+        ctx.lineTo(maxX, childY - 40);
+        ctx.stroke();
+
+        // 6. Line from horizontal line down to each child
+        children.forEach(([cid]) => {
+          const cpos = positions[cid];
+          ctx.beginPath();
+          ctx.moveTo(cpos.x, childY - 40);
+          ctx.lineTo(cpos.x, cpos.y);
+          ctx.stroke();
+        });
+      }
+    }
+
+    // If no spouse, draw direct parent→child line(s)
+    if (!spouseId) {
+      Object.entries(data).forEach(([cid, child]) => {
+        const isParent = child.relations?.mother === id || child.relations?.father === id;
+        if (isParent && positions[cid]) {
+          const to = positions[cid];
+          ctx.beginPath();
+          ctx.moveTo(from.x, from.y);
+          ctx.lineTo(to.x, to.y);
+          ctx.strokeStyle = '#444';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        }
+      });
     }
   });
 }
