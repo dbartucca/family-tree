@@ -14,6 +14,10 @@ const nodeHeight = 100; // Height of each person's box
 const verticalSpacing = 200; // Space between generations
 const horizontalSpacing = 150; // Space between siblings
 
+// Adjust the root positioning based on window size
+const treeContainer = document.getElementById('tree-container');
+treeContainer.style.position = 'relative'; // Use relative positioning for the root container
+
 function renderTree() {
   const container = document.getElementById('tree-container');
   container.innerHTML = ''; // Clear the container before rendering the tree
