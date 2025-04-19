@@ -146,6 +146,56 @@
     },
     "bio": {
       "desc": "Bio of Nana",
+      "gender": "F"
+    }
+  },
+  "7": {
+    "name": {
+      "first": "Delia",
+      "middle":"Frances",
+      "last": "Bartucca"
+    },
+    "birth": {
+      "year": 1934,
+      "month": 2,
+      "day": 16,
+      "city": "Norwood",
+      "state": "Massachusetts",
+      "country": "US"
+    },
+    "relations": {
+      "mother": null,
+      "father": null,
+      "spouse": 8,
+      "children": [3]
+    },
+    "bio": {
+      "desc": "Bio of Mimi",
+      "gender": "F"
+    }
+  },
+  "8": {
+    "name": {
+      "first": "Frank",
+      "middle":null,
+      "last": "Bartucca"
+    },
+    "birth": {
+      "year": 1932,
+      "month": 4,
+      "day": 12,
+      "city": "Matoaka",
+      "state": "West Virginia",
+      "country": "US"
+    },
+    "relations": {
+      "mother": null,
+      "father": null,
+      "spouse": 7,
+      "children": [3]
+    },
+    "bio": {
+      "desc": "Bio of Paw Paw",
       "gender": "M"
     }
   }
