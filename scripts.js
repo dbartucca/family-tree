@@ -1,270 +1,176 @@
-document.addEventListener("DOMContentLoaded", async () => {
-  const data = await fetch("data.json").then(r => r.json());
-  const canvas = document.getElementById("connection-canvas");
-  const nodesContainer = document.getElementById("nodes-container");
-  const ctx = canvas.getContext("2d");
+// scripts.js
 
-  // Layout constants
-  const NODE_W = 160, NODE_H = 100;
-  const H_SPACING = 300, V_SPACING = 180; // Increased horizontal spacing
-  const TOP_OFFSET = 50;
+const canvas = document.getElementById('tree');
+const ctx = canvas.getContext('2d');
+canvas.width = 5000;
+canvas.height = 5000;
 
-  // 1) Assign people to generations
-  const generations = assignGenerations(data);
+let members = {};
+let positions = {}; // Store { id: {x, y} }
+let drawn = new Set();
 
-  // 2) Position every box and record its center
-  const positions = {};
-  let maxX = 0, maxY = 0;
+const boxWidth = 140;
+const boxHeight = 100;
+const hSpacing = 50;
+const vSpacing = 150;
+const generationSpacing = 250;
 
-  // Generation 0: roots spread evenly
-  const roots = generations[0] || [];
-  const rootTotalW = (roots.length - 1) * H_SPACING;
-  let startX = (window.innerWidth - rootTotalW) / 2;
-  roots.forEach((id, i) => {
-    const x = startX + i * H_SPACING;
-    const y = TOP_OFFSET;
-    positions[id] = { x, y: y + NODE_H / 2 };
-    createBox(id, data[id], x, y);
-    maxX = Math.max(maxX, x + NODE_W / 2);
-    maxY = Math.max(maxY, y + NODE_H);
-  });
+async function fetchData() {
+  const res = await fetch('data.json');
+  members = await res.json();
+}
 
-  // Generations >0: group by parent(s), then center children under them
-  Object.keys(generations)
-    .map(n => parseInt(n, 10))
-    .filter(n => n > 0)
-    .sort((a, b) => a - b)
-    .forEach(gen => {
-      const ids = generations[gen];
-      const groups = {};
+function drawBox(id, x, y) {
+  const person = members[id];
+  if (!person) return;
 
-      // group siblings by couple or single parent
-      ids.forEach(id => {
-        const { mother, father } = data[id].relations;
-        let key;
-        if (mother != null && father != null) {
-          const [a, b] = [mother, father].sort((a, b) => a - b);
-          key = `c${a}-${b}`;
-        } else if (mother != null) {
-          key = `p${mother}`;
-        } else if (father != null) {
-          key = `p${father}`;
-        } else {
-          key = `solo${id}`;
-        }
-        (groups[key] = groups[key] || []).push(id);
-      });
+  const name = `${person.name.first} ${person.name.middle || ''} ${person.name.last}`.trim();
+  const birthYear = person.birth?.year || '';
+  const gender = person.bio?.gender || '';
 
-      // position each group
-      Object.entries(groups).forEach(([key, kids]) => {
-        let anchorX;
-        if (key.startsWith("c")) {
-          const [, pair] = key.match(/^c(.+)$/);
-          const [a, b] = pair.split("-").map(Number);
-          anchorX = (positions[a].x + positions[b].x) / 2;
-        } else if (key.startsWith("p")) {
-          anchorX = positions[parseInt(key.slice(1))].x;
-        } else {
-          anchorX = window.innerWidth / 2;
-        }
-        const totalW = (kids.length - 1) * H_SPACING;
-        const sx = anchorX - totalW / 2;
-        const y = gen * V_SPACING + TOP_OFFSET;
+  ctx.strokeStyle = 'black';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x, y, boxWidth, boxHeight);
 
-        // Position each child
-        kids.forEach((cid, idx) => {
-          const x = sx + idx * H_SPACING;
-          positions[cid] = { x, y: y + NODE_H / 2 };
-          createBox(cid, data[cid], x, y);
-          maxX = Math.max(maxX, x + NODE_W / 2);
-          maxY = Math.max(maxY, y + NODE_H);
-        });
-      });
-    });
+  ctx.font = '14px sans-serif';
+  ctx.fillStyle = 'black';
+  ctx.fillText(name, x + 5, y + 20);
+  ctx.fillText(birthYear, x + 5, y + 40);
 
-  // 3) Enforce male-left for every couple
-  enforceMaleLeft();
-
-  // 4) Resize canvas & container
-  const fullW = Math.max(maxX + 50, window.innerWidth);
-  const fullH = Math.max(maxY + 50, window.innerHeight);
-  canvas.width = fullW; canvas.height = fullH;
-  nodesContainer.style.width = fullW + "px";
-  nodesContainer.style.height = fullH + "px";
-
-  // 5) Draw lines
-  drawLines(data, positions, ctx);
-
-  // ——— Helpers ———
-
-  function assignGenerations(data) {
-    const gens = {}, visited = new Set(), childrenMap = {};
-
-    // map parent → [child...]
-    for (const id in data) {
-      const rel = data[id].relations || {};
-      ["mother", "father"].forEach(r => {
-        if (rel[r] != null) {
-          (childrenMap[rel[r]] = childrenMap[rel[r]] || []).push(parseInt(id));
-        }
-      });
-    }
-
-    function dfs(id, gen) {
-      if (visited.has(id)) return;
-      visited.add(id);
-      (gens[gen] = gens[gen] || []).push(id);
-      (childrenMap[id] || []).forEach(cid => dfs(cid, gen + 1));
-      const sp = data[id].relations?.spouse;
-      if (sp != null) dfs(sp, gen);
-    }
-
-    Object.keys(data).forEach(id => {
-      const rel = data[id].relations || {};
-      if (rel.mother == null && rel.father == null) dfs(parseInt(id), 0);
-    });
-
-    return gens;
-  }
-
-  function createBox(id, person, centerX, topY) {
-    const div = document.createElement("div");
-    div.className = "person";
-    div.id = `person-${id}`;
-    div.style.left = (centerX - NODE_W / 2) + "px";
-    div.style.top = topY + "px";
-
-    // image (PNG then JFIF)
+  // Draw image if it exists
+  const imageFormats = ['.png', '.jfif'];
+  for (const ext of imageFormats) {
     const img = new Image();
-    img.src = `images/${id}.png`;
-    img.onload = () => div.prepend(img);
-    img.onerror = () => {
-      const j = new Image();
-      j.src = `images/${id}.jfif`;
-      j.onload = () => div.prepend(j);
+    img.src = `images/${id}${ext}`;
+    img.onload = () => {
+      ctx.drawImage(img, x + boxWidth - 45, y + 5, 40, 40);
     };
-    img.alt = person.name.first;
-
-    // name
-    const full = [person.name.first, person.name.middle, person.name.last]
-      .filter(s => s).join(" ");
-    const nm = document.createElement("div");
-    nm.innerHTML = `<strong>${full}</strong>`;
-    div.appendChild(nm);
-
-    nodesContainer.appendChild(div);
+    img.onerror = () => {};
   }
 
-  function enforceMaleLeft() {
-    // For each couple, if female on left & male on right, swap
-    Object.entries(data).forEach(([id, p]) => {
-      const sp = p.relations?.spouse;
-      if (sp != null && id < sp) { // only once per pair
-        const him = p.bio.gender === "M" ? parseInt(id) : parseInt(sp);
-        const her = p.bio.gender === "F" ? parseInt(id) : parseInt(sp);
-        if (him && her) {
-          const bH = document.getElementById(`person-${him}`);
-          const bF = document.getElementById(`person-${her}`);
-          const posH = parseFloat(bH.style.left), posF = parseFloat(bF.style.left);
-          if (posH > posF) {
-            // swap positions in both DOM and positions object
-            bH.style.left = posF + "px";
-            bF.style.left = posH + "px";
-            const tmpX = positions[him].x;
-            positions[him].x = positions[her].x;
-            positions[her].x = tmpX;
+  positions[id] = { x: x + boxWidth / 2, y: y + boxHeight / 2 };
+  drawn.add(id);
+}
+
+function drawLine(x1, y1, x2, y2) {
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+}
+
+function groupGeneration(generation, membersData) {
+  const visited = new Set();
+  const groups = [];
+
+  for (const id of generation) {
+    if (visited.has(id)) continue;
+
+    const member = membersData[id];
+    const spouseId = member.relations?.spouse?.toString();
+
+    if (spouseId && generation.includes(spouseId)) {
+      // Gender sorting: male left, female right
+      const first = member.bio.gender === 'M' ? id : spouseId;
+      const second = member.bio.gender === 'F' ? id : spouseId;
+      groups.push([first, second]);
+      visited.add(id);
+      visited.add(spouseId);
+    } else {
+      groups.push([id]);
+      visited.add(id);
+    }
+  }
+  return groups;
+}
+
+function layoutGenerations() {
+  const levels = {};
+  const visited = new Set();
+
+  // BFS for assigning levels
+  const queue = [];
+
+  // Start with root ancestors (no parents)
+  for (const id in members) {
+    const { father, mother } = members[id].relations;
+    if (!father && !mother) {
+      levels[id] = 0;
+      queue.push(id);
+    }
+  }
+
+  while (queue.length) {
+    const id = queue.shift();
+    const level = levels[id];
+    const children = members[id].relations?.children || [];
+
+    for (const childId of children) {
+      if (!(childId in levels)) {
+        levels[childId] = level + 1;
+        queue.push(childId);
+      }
+    }
+  }
+
+  const generationMap = {};
+  for (const id in levels) {
+    const level = levels[id];
+    if (!generationMap[level]) generationMap[level] = [];
+    generationMap[level].push(id);
+  }
+
+  let y = 50;
+  for (const level of Object.keys(generationMap).sort((a, b) => a - b)) {
+    const people = generationMap[level];
+    const groups = groupGeneration(people, members);
+    let x = 50;
+
+    for (const group of groups) {
+      group.forEach((id, i) => {
+        drawBox(id, x + i * (boxWidth + hSpacing / 2), y);
+      });
+
+      if (group.length === 2) {
+        // Spouse line
+        const [id1, id2] = group;
+        const pos1 = positions[id1];
+        const pos2 = positions[id2];
+        drawLine(pos1.x, pos1.y, pos2.x, pos2.y);
+
+        // Children connector
+        const children = members[id1].relations?.children || [];
+        if (children.length) {
+          const midX = (pos1.x + pos2.x) / 2;
+          const midY = pos1.y + boxHeight / 2;
+
+          // Vertical line down
+          drawLine(midX, midY, midX, midY + generationSpacing / 2);
+
+          // Horizontal line to each child
+          const childY = midY + generationSpacing / 2;
+          const childXs = children.map(c => positions[c]?.x).filter(Boolean);
+
+          if (childXs.length) {
+            const minX = Math.min(...childXs);
+            const maxX = Math.max(...childXs);
+            drawLine(minX, childY, maxX, childY);
+
+            childXs.forEach(cx => {
+              drawLine(cx, childY, cx, childY - generationSpacing / 2);
+            });
           }
         }
       }
-    });
+      x += group.length * (boxWidth + hSpacing) + hSpacing;
+    }
+    y += generationSpacing;
   }
+}
 
-  function drawLines(data, pos, ctx) {
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    const couplesDone = new Set();
+async function renderTree() {
+  await fetchData();
+  layoutGenerations();
+}
 
-    Object.entries(data).forEach(([id, p]) => {
-      const from = pos[id];
-      if (!from) return;
-      const sp = p.relations?.spouse;
-
-      // spouse + shared children
-      if (sp != null && pos[sp]) {
-        const key = [id, sp].sort().join("-");
-        if (!couplesDone.has(key)) {
-          couplesDone.add(key);
-          const to = pos[sp];
-
-          // dashed line
-          ctx.beginPath();
-          ctx.moveTo(from.x, from.y);
-          ctx.lineTo(to.x, to.y);
-          ctx.strokeStyle = "green";
-          ctx.lineWidth = 1.5;
-          ctx.setLineDash([5, 3]);
-          ctx.stroke();
-          ctx.setLineDash([]);
-
-          // midpoint
-          const midX = (from.x + to.x) / 2, midY = (from.y + to.y) / 2;
-
-          // find children
-          const kids = Object.entries(data)
-            .filter(([cid, c]) => {
-              const m = c.relations?.mother, f = c.relations?.father;
-              return (m == id && f == sp) || (f == id && m == sp);
-            }).map(([cid]) => parseInt(cid));
-
-          if (kids.length) {
-            const pts = kids.map(cid => pos[cid]).filter(Boolean);
-            if (pts.length) {
-              const childY = Math.min(...pts.map(p => p.y));
-              const dxs = pts.map(p => p.x - midX);
-              const maxDx = Math.max(...dxs.map(d => Math.abs(d)));
-              const leftX = midX - maxDx, rightX = midX + maxDx;
-
-              // vertical drop
-              ctx.beginPath();
-              ctx.moveTo(midX, midY);
-              ctx.lineTo(midX, childY - 40);
-              ctx.strokeStyle = "#444";
-              ctx.lineWidth = 1.5;
-              ctx.stroke();
-
-              // symmetrical horizontal
-              ctx.beginPath();
-              ctx.moveTo(leftX, childY - 40);
-              ctx.lineTo(rightX, childY - 40);
-              ctx.stroke();
-
-              // drops
-              kids.forEach(cid => {
-                const cpos = pos[cid];
-                ctx.beginPath();
-                ctx.moveTo(cpos.x, childY - 40);
-                ctx.lineTo(cpos.x, cpos.y);
-                ctx.stroke();
-              });
-            }
-          }
-        }
-      }
-
-      // solo parent→child
-      if (sp == null) {
-        Object.entries(data).forEach(([cid, c]) => {
-          const m = c.relations?.mother, f = c.relations?.father;
-          if ((m == id || f == id) && pos[cid]) {
-            const to = pos[cid];
-            ctx.beginPath();
-            ctx.moveTo(from.x, from.y);
-            ctx.lineTo(to.x, to.y);
-            ctx.strokeStyle = "#444";
-            ctx.lineWidth = 1.5;
-            ctx.stroke();
-          }
-        });
-      }
-    });
-  }
-});
+renderTree();
