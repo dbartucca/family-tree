@@ -1,26 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Family Tree</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <h1>Family Tree</h1>
   <div id="tree-container"></div>
-  <svg id="connection-lines"></svg>
-
-  <!-- Info Card -->
-  <div id="info-card" class="info-card hidden">
-    <div class="info-card-content">
-      <button class="close-btn">&times;</button>
-      <h2 id="info-name"></h2>
-      <p id="info-birth"></p>
-      <p id="info-death"></p>
-      <p id="info-bio"></p>
-      <div id="info-relations"></div>
-    </div>
-  </div>
+  <canvas id="lines"></canvas>
 
   <script src="scripts.js"></script>
 </body>
