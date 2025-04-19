@@ -1,65 +1,100 @@
+/* General body styling */
 body {
   margin: 0;
   padding: 0;
-  background-color: #f9f9f9;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  overflow: auto;
+  background-color: #f2f2f2;
+  font-family: 'Arial', sans-serif;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
 }
 
-canvas {
-  display: block;
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 0;
-}
-
+/* Styling the container that holds the tree */
 .tree-container {
   position: relative;
-  padding: 50px;
-  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
 
+/* Styling for each person's box */
 .person-box {
   position: absolute;
-  width: 180px;
-  padding: 10px;
-  background-color: white;
-  border: 2px solid #ccc;
-  border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  width: 200px;
+  padding: 15px;
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   text-align: center;
   font-size: 14px;
-  transition: transform 0.2s ease;
+  color: #333;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
+/* Hover effect for the person box */
 .person-box:hover {
-  transform: scale(1.03);
-  border-color: #999;
+  transform: scale(1.05);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
+/* Image inside the person box */
 .person-box img {
-  width: 80px;
-  height: 80px;
+  width: 90px;
+  height: 90px;
   border-radius: 50%;
   object-fit: cover;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
+/* Name formatting */
 .name {
-  font-weight: bold;
   font-size: 16px;
-  margin-bottom: 4px;
+  font-weight: bold;
+  margin-bottom: 5px;
 }
 
+/* Date formatting for birth and death */
 .dates {
   font-size: 12px;
-  color: #666;
-  margin-bottom: 4px;
+  color: #777;
+  margin-bottom: 5px;
 }
 
+/* Short bio or description */
 .bio {
   font-size: 12px;
   color: #444;
-  margin-top: 6px;
+  margin-top: 5px;
 }
+
+/* Lines connecting people (to be drawn using canvas) */
+.canvas-line {
+  position: absolute;
+  border-left: 2px solid #333;
+  width: 0;
+  height: 50px;
+}
+
+/* Horizontal lines for parent-child relationships */
+.horizontal-line {
+  position: absolute;
+  border-top: 2px solid #333;
+  height: 0;
+  width: 150px; /* adjust as necessary */
+  top: 50%;
+  left: 0;
+}
+
+/* Styling for the relationships between family members */
+.spouse-line {
+  position: absolute;
+  border-top: 2px solid #333;
+  height: 0;
+  width: 150px;
+  top: 50%;
+}
+
