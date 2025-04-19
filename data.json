@@ -16,92 +16,68 @@
     "relations": {
       "mother": 2,
       "father": 3,
-      "spouse": null
-    },
-    "death": {
-      "year": null,
-      "month": null,
-      "day": null,
-      "city": null,
-      "state": null,
-      "country": null
+      "spouse": null,
+      "children": []
     },
     "bio": {
       "desc": "Bio of Delia",
-      "gender": "F",
-      "military": null
+      "gender": "F"
     }
   },
   "2": {
     "name": {
       "first": "Caroline",
-      "middle": "Theresa",
-      "last": "Reynolds"
+      "middle":"Theresa",
+      "last": "Bartucca"
     },
     "birth": {
       "year": 1968,
       "month": 10,
       "day": 20,
-      "city": "boston",
-      "state": "massachusetts",
-      "country": "us"
+      "city": "Boston",
+      "state": "Massachusetts",
+      "country": "US"
     },
     "relations": {
       "mother": null,
       "father": null,
-      "spouse": 1
-    },
-    "death": {
-      "year": null,
-      "month": null,
-      "day": null,
-      "city": null,
-      "state": null,
-      "country": null
+      "spouse": 3,
+      "children": [1,4]
     },
     "bio": {
       "desc": "Bio of Caroline",
-      "gender": "F",
-      "military": null
+      "gender": "F"
     }
   },
   "3": {
     "name": {
-      "first": "domenic",
-      "middle": "christopher",
-      "last": "bartucca"
+      "first": "Domenic",
+      "middle":"Christopher",
+      "last": "Bartucca"
     },
     "birth": {
       "year": 1966,
       "month": 9,
       "day": 3,
-      "city": "norwood",
-      "state": "ma",
-      "country": "us"
+      "city": "Norwood",
+      "state": "Massachusetts",
+      "country": "US"
     },
     "relations": {
       "mother": null,
       "father": null,
-      "spouse": 2
-    },
-    "death": {
-      "year": null,
-      "month": null,
-      "day": null,
-      "city": null,
-      "state": null,
-      "country": null
+      "spouse": 2,
+      "children": [1,4]
     },
     "bio": {
-      "desc": "Bio of Chris",
-      "gender": "M",
-      "military": null
+      "desc": "Bio of Domenic",
+      "gender": "M"
     }
   },
   "4": {
     "name": {
       "first": "Brendan",
-      "middle": "Michael",
+      "middle":"Michael",
       "last": "Bartucca"
     },
     "birth": {
@@ -113,22 +89,38 @@
       "country": "US"
     },
     "relations": {
+      "mother": null,
+      "father": null,
+      "spouse": null,
+      "children": []
+    },
+    "bio": {
+      "desc": "Bio of John",
+      "gender": "M"
+    }
+  },
+  "5": {
+    "name": {
+      "first": "Sarah",
+      "last": "Bartucca"
+    },
+    "birth": {
+      "year": 2022,
+      "month": 9,
+      "day": 4,
+      "city": "Norwood",
+      "state": "Massachusetts",
+      "country": "US"
+    },
+    "relations": {
       "mother": 2,
       "father": 3,
-      "spouse": null
-    },
-    "death": {
-      "year": null,
-      "month": null,
-      "day": null,
-      "city": null,
-      "state": null,
-      "country": null
+      "spouse": null,
+      "children": []
     },
     "bio": {
       "desc": "Bio of Brendan",
-      "gender": "M",
-      "military": null
+      "gender": "M"
     }
   }
 }
