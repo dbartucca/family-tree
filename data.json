@@ -1,0 +1,134 @@
+{
+  "1": {
+    "name": {
+      "first": "Delia",
+      "middle": "Maureen",
+      "last": "Bartucca"
+    },
+    "birth": {
+      "year": 2000,
+      "month": 1,
+      "day": 11,
+      "city": "Norwood",
+      "state": "Massachusetts",
+      "country": "US"
+    },
+    "relations": {
+      "mother": 2,
+      "father": 3,
+      "spouse": null
+    },
+    "death": {
+      "year": null,
+      "month": null,
+      "day": null,
+      "city": null,
+      "state": null,
+      "country": null
+    },
+    "bio": {
+      "desc": "Bio of Delia",
+      "gender": "F",
+      "military": null
+    }
+  },
+  "2": {
+    "name": {
+      "first": "Caroline",
+      "middle": "Theresa",
+      "last": "Reynolds"
+    },
+    "birth": {
+      "year": 1968,
+      "month": 10,
+      "day": 20,
+      "city": "boston",
+      "state": "massachusetts",
+      "country": "us"
+    },
+    "relations": {
+      "mother": null,
+      "father": null,
+      "spouse": 1
+    },
+    "death": {
+      "year": null,
+      "month": null,
+      "day": null,
+      "city": null,
+      "state": null,
+      "country": null
+    },
+    "bio": {
+      "desc": "Bio of Caroline",
+      "gender": "F",
+      "military": null
+    }
+  },
+  "3": {
+    "name": {
+      "first": "domenic",
+      "middle": "christopher",
+      "last": "bartucca"
+    },
+    "birth": {
+      "year": 1966,
+      "month": 9,
+      "day": 3,
+      "city": "norwood",
+      "state": "ma",
+      "country": "us"
+    },
+    "relations": {
+      "mother": null,
+      "father": null,
+      "spouse": 2
+    },
+    "death": {
+      "year": null,
+      "month": null,
+      "day": null,
+      "city": null,
+      "state": null,
+      "country": null
+    },
+    "bio": {
+      "desc": "Bio of Chris",
+      "gender": "M",
+      "military": null
+    }
+  },
+  "1": {
+    "name": {
+      "first": "Brendan",
+      "middle": "Michael",
+      "last": "Bartucca"
+    },
+    "birth": {
+      "year": 2002,
+      "month": 6,
+      "day": 5,
+      "city": "Norwood",
+      "state": "Massachusetts",
+      "country": "US"
+    },
+    "relations": {
+      "mother": 2,
+      "father": 3,
+      "spouse": null
+    },
+    "death": {
+      "year": null,
+      "month": null,
+      "day": null,
+      "city": null,
+      "state": null,
+      "country": null
+    },
+    "bio": {
+      "desc": "Bio of Brendan",
+      "gender": "M",
+      "military": null
+    }
+  }
+}
