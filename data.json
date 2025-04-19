@@ -89,37 +89,13 @@
       "country": "US"
     },
     "relations": {
-      "mother": null,
-      "father": null,
-      "spouse": null,
-      "children": []
-    },
-    "bio": {
-      "desc": "Bio of John",
-      "gender": "M"
-    }
-  },
-  "5": {
-    "name": {
-      "first": "Sarah",
-      "last": "Bartucca"
-    },
-    "birth": {
-      "year": 2022,
-      "month": 9,
-      "day": 4,
-      "city": "Norwood",
-      "state": "Massachusetts",
-      "country": "US"
-    },
-    "relations": {
       "mother": 2,
       "father": 3,
       "spouse": null,
       "children": []
     },
     "bio": {
-      "desc": "Bio of Brendan",
+      "desc": "Bio of John",
       "gender": "M"
     }
   }
