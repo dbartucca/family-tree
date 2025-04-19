@@ -1,50 +1,46 @@
-async function loadFamilyTree() {
-  const response = await fetch('data.json');
-  const data = await response.json();
+fetch('data.json')
+  .then(res => res.json())
+  .then(data => {
+    renderTree(data);
+    drawConnections(data);
+  });
 
-  // Start with the root node(s) — find people with no parents
-  const roots = Object.entries(data).filter(([id, person]) =>
-    person.relations.mother === null && person.relations.father === null
-  );
+function renderTree(data) {
+  const container = document.getElementById('tree');
 
-  const container = document.getElementById('tree-container');
-
-  for (const [id, person] of roots) {
-    const subtree = buildTree(data, parseInt(id));
-    container.appendChild(subtree);
+  for (const [id, person] of Object.entries(data)) {
+    const div = document.createElement('div');
+    div.classList.add('person');
+    div.id = `person-${id}`;
+    div.innerText = `${person.name.first} ${person.name.last}`;
+    container.appendChild(div);
   }
 }
 
-function buildTree(data, id) {
-  const person = data[id];
-  const wrapper = document.createElement('div');
-  wrapper.classList.add('person');
+function drawConnections(data) {
+  const drawnSpouses = new Set();
 
-  wrapper.innerHTML = `
-    <strong>${person.name.first} ${person.name.middle || ''} ${person.name.last}</strong><br>
-    Born: ${person.birth.year}
-  `;
+  for (const [id, person] of Object.entries(data)) {
+    const from = document.getElementById(`person-${id}`);
 
-  if (person.relations.spouse) {
-    const spouse = data[person.relations.spouse];
-    wrapper.innerHTML += `<br>Spouse: ${spouse.name.first}`;
-  }
+    // Spouse (only draw once)
+    const spouseId = person.relations.spouse;
+    const pairKey = [id, spouseId].sort().join('-');
 
-  if (person.relations.children.length > 0) {
-    const childContainer = document.createElement('div');
-    childContainer.style.display = 'flex';
-    childContainer.style.justifyContent = 'center';
-    childContainer.style.marginTop = '20px';
-
-    for (const childId of person.relations.children) {
-      const childTree = buildTree(data, childId);
-      childContainer.appendChild(childTree);
+    if (spouseId && !drawnSpouses.has(pairKey)) {
+      const to = document.getElementById(`person-${spouseId}`);
+      if (to) {
+        new LeaderLine(from, to, { color: 'red', dash: true });
+        drawnSpouses.add(pairKey);
+      }
     }
 
-    wrapper.appendChild(childContainer);
+    // Children
+    person.relations.children.forEach(childId => {
+      const to = document.getElementById(`person-${childId}`);
+      if (to) {
+        new LeaderLine(from, to, { color: 'blue' });
+      }
+    });
   }
-
-  return wrapper;
 }
-
-loadFamilyTree();
