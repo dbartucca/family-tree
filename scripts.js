@@ -1,123 +1,71 @@
-const container = document.getElementById('family-tree-container');
-let treeData = {};
-let maxY = 0;
+async function loadTree() {
+  const response = await fetch('data.json');
+  const data = await response.json();
+  const container = document.getElementById('tree-container');
+  const canvas = document.getElementById('connection-lines');
+  const ctx = canvas.getContext('2d');
 
-fetch('data.json')
-  .then(response => response.json())
-  .then(data => {
-    treeData = data;
-    renderTree();
+  canvas.width = document.body.scrollWidth;
+  canvas.height = document.body.scrollHeight;
+
+  const positions = {};
+  let x = 100;
+  let y = 100;
+  const offsetY = 220;
+
+  Object.keys(data).forEach((id, index) => {
+    const person = data[id];
+    const div = document.createElement('div');
+    div.className = 'person';
+    div.id = `person-${id}`;
+    div.style.left = `${x}px`;
+    div.style.top = `${y}px`;
+
+    const imgPath = `images/${id}.png`;
+    const jfifPath = `images/${id}.jfif`;
+
+    const img = new Image();
+    img.onload = () => div.appendChild(img);
+    img.onerror = () => {}; // no image
+    img.src = imgPath;
+    img.onerror = () => {
+      img.src = jfifPath;
+      img.onerror = () => {}; // no image at all
+    };
+
+    const name = `${person.name.first} ${person.name.middle} ${person.name.last}`.replace(/\s+/g, ' ').trim();
+    const info = document.createElement('div');
+    info.innerHTML = `<strong>${name}</strong><br/>Born: ${person.birth.year}`;
+    div.appendChild(info);
+
+    container.appendChild(div);
+    positions[id] = { x: x + 75, y: y + 40 }; // center of box
+    x += 250;
+    if (x > window.innerWidth - 200) {
+      x = 100;
+      y += offsetY;
+    }
   });
 
-function createPerson(id, x, y) {
-  const member = treeData[id];
-  if (!member) return;
+  // Draw lines
+  Object.keys(data).forEach((id) => {
+    const person = data[id];
+    const from = positions[id];
+    if (!from) return;
 
-  const card = document.createElement('div');
-  card.className = 'person';
-  card.style.left = `${x}px`;
-  card.style.top = `${y}px`;
-
-  if (y > maxY) maxY = y;
-
-  const fullName = `${member.name.first} ${member.name.middle || ''} ${member.name.last}`;
-  const birthDate = `${member.birth.month}/${member.birth.day}/${member.birth.year}`;
-  const deathYear = member.death?.year ? ` - ${member.death.year}` : '';
-
-  let imagePath = `images/${id}.png`;
-  const jfifPath = `images/${id}.jfif`;
-
-  const img = new Image();
-  img.onload = () => {
-    card.innerHTML = `
-      <img src="${imagePath}" alt="${fullName}">
-      <h4>${fullName}</h4>
-      <p>${birthDate}${deathYear}</p>
-    `;
-  };
-  img.onerror = () => {
-    const fallbackImg = new Image();
-    fallbackImg.onload = () => {
-      card.innerHTML = `
-        <img src="${jfifPath}" alt="${fullName}">
-        <h4>${fullName}</h4>
-        <p>${birthDate}${deathYear}</p>
-      `;
-    };
-    fallbackImg.onerror = () => {
-      card.innerHTML = `
-        <h4>${fullName}</h4>
-        <p>${birthDate}${deathYear}</p>
-      `;
-    };
-    fallbackImg.src = jfifPath;
-  };
-  img.src = imagePath;
-
-  container.appendChild(card);
-}
-
-function drawLine(x1, y1, x2, y2) {
-  const line = document.createElement('div');
-  line.className = 'line';
-
-  const deltaX = x2 - x1;
-  const deltaY = y2 - y1;
-  const length = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-
-  line.style.width = `${length}px`;
-  line.style.left = `${x1}px`;
-  line.style.top = `${y1}px`;
-
-  const angle = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
-  line.style.transform = `rotate(${angle}deg)`;
-
-  container.appendChild(line);
-}
-
-function renderTree() {
-  const positions = {};
-
-  const rootId = 1;
-  const boxWidth = 180;
-  const boxHeight = 160;
-  const hSpacing = 100;
-  const vSpacing = 200;
-
-  function positionPerson(id, depth, xOffset) {
-    const x = xOffset;
-    const y = depth * (boxHeight + vSpacing);
-    positions[id] = { x, y };
-    createPerson(id, x, y);
-
-    const member = treeData[id];
-    if (!member) return;
-
-    const children = Object.entries(treeData)
-      .filter(([_, m]) => m.relations?.mother === id || m.relations?.father === id)
-      .map(([cid]) => parseInt(cid));
-
-    let childX = x - (children.length - 1) * (boxWidth + hSpacing) / 2;
-
-    children.forEach(childId => {
-      positionPerson(childId, depth + 1, childX);
-      const childPos = positions[childId];
-      drawLine(x + boxWidth / 2, y + boxHeight, childPos.x + boxWidth / 2, childPos.y);
-      childX += boxWidth + hSpacing;
+    ['mother', 'father', 'spouse'].forEach(rel => {
+      const relId = person.relations[rel];
+      if (relId && positions[relId]) {
+        const to = positions[relId];
+        ctx.beginPath();
+        ctx.moveTo(from.x, from.y);
+        ctx.lineTo(to.x, to.y);
+        ctx.strokeStyle = rel === 'spouse' ? 'green' : 'black';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
     });
-
-    const spouseId = member.relations?.spouse;
-    if (spouseId && !positions[spouseId]) {
-      const spouseX = x + boxWidth + hSpacing / 2;
-      const spouseY = y;
-      positions[spouseId] = { x: spouseX, y: spouseY };
-      createPerson(spouseId, spouseX, spouseY);
-      drawLine(x + boxWidth, y + boxHeight / 2, spouseX, spouseY + boxHeight / 2);
-    }
-  }
-
-  positionPerson(rootId, 0, window.innerWidth / 2 - boxWidth / 2);
-
-  // Dynamically set the container height based on max Y position
-  container.style.height = (maxY + boxHeight + 100) + 'px';
+  });
 }
+
+window.onload = loadTree;
