@@ -1,60 +1,82 @@
 body {
-  margin: 0;
-  padding: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  background-color: #f4f4f4;
-  overflow: hidden; /* Prevent overflow */
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
 }
 
-#tree-container {
-  position: relative; /* Ensures absolute positioning of child nodes */
-  width: 100%;
-  height: 100%;
+h1 {
+    text-align: center;
+    padding: 20px;
+    background-color: #333;
+    color: white;
 }
 
-.person {
-  background-color: #4CAF50;
-  color: white;
-  border-radius: 8px;
-  padding: 10px;
-  text-align: center;
-  cursor: pointer;
-  position: absolute;
+#family-tree {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
 }
 
-.info-card {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  background-color: #fff;
-  padding: 20px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  width: 250px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+.tree-container {
+    position: relative;
+    max-width: 100%;
+    overflow: hidden;
 }
 
-.close-btn {
-  cursor: pointer;
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  font-size: 18px;
-  color: red;
+.family-member {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 20px;
 }
 
-.up-btn {
-  font-size: 20px;
-  margin-bottom: 10px;
-  cursor: pointer;
+.family-member-box {
+    width: 150px;
+    height: 100px;
+    background-color: #fff;
+    border: 2px solid #333;
+    border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+    text-align: center;
+    position: relative;
 }
 
-canvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: -1;
+.family-member .info-card {
+    width: 250px;
+    padding: 10px;
+    background-color: #fff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform: translateY(-100%);
+    transition: transform 0.3s ease;
+}
+
+.family-member:hover .info-card {
+    transform: translateY(0);
+}
+
+.line {
+    position: absolute;
+    width: 2px;
+    background-color: #333;
+    transition: height 0.3s ease;
+}
+
+button {
+    margin-top: 10px;
+    padding: 5px 10px;
+    background-color: #333;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #555;
 }
