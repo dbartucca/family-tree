@@ -1,48 +1,65 @@
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
+  padding: 0;
+  background-color: #f9f9f9;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   overflow: auto;
-  background: #f8f8f8;
 }
 
-h1 {
-  text-align: center;
-  padding: 20px;
-}
-
-#tree-container {
-  position: relative;
-  min-height: 100vh;
-  min-width: 100vw;
-}
-
-#connection-canvas {
+canvas {
+  display: block;
   position: absolute;
   top: 0;
   left: 0;
   z-index: 0;
 }
 
-#nodes-container {
+.tree-container {
   position: relative;
+  padding: 50px;
   z-index: 1;
 }
 
-.person {
+.person-box {
   position: absolute;
-  width: 160px;
-  background: white;
-  border: 1px solid #ccc;
-  border-radius: 10px;
+  width: 180px;
   padding: 10px;
+  background-color: white;
+  border: 2px solid #ccc;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
   text-align: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  font-size: 14px;
+  transition: transform 0.2s ease;
 }
 
-.person img {
+.person-box:hover {
+  transform: scale(1.03);
+  border-color: #999;
+}
+
+.person-box img {
   width: 80px;
   height: 80px;
-  object-fit: cover;
   border-radius: 50%;
-  margin-bottom: 5px;
+  object-fit: cover;
+  margin-bottom: 8px;
+}
+
+.name {
+  font-weight: bold;
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+.dates {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.bio {
+  font-size: 12px;
+  color: #444;
+  margin-top: 6px;
 }
