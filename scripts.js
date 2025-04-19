@@ -9,33 +9,33 @@ fetch('data.json')
     window.addEventListener('resize', drawLines); // Redraw lines when resizing the window
   });
 
-const nodeWidth = 180; // Width of each person's box
-const nodeHeight = 100; // Height of each person's box
-const verticalSpacing = 200; // Space between generations
-const horizontalSpacing = 150; // Space between siblings
+const nodeWidth = 180;
+const nodeHeight = 100;
+const verticalSpacing = 200;
+const horizontalSpacing = 150;
 
-// Adjust the root positioning based on window size
 const treeContainer = document.getElementById('tree-container');
-treeContainer.style.position = 'relative'; // Use relative positioning for the root container
+const canvas = document.getElementById('lines');
+const ctx = canvas.getContext('2d');
+
+treeContainer.style.position = 'relative'; 
 
 function renderTree() {
   const container = document.getElementById('tree-container');
-  container.innerHTML = ''; // Clear the container before rendering the tree
-  const root = getRoot(); // Get the root (ancestor) of the tree
+  container.innerHTML = ''; 
+  const root = getRoot(); 
   if (root) {
-    positionTree(root, window.innerWidth / 2, 20); // Start positioning from the root, centered horizontally
-    drawLines(); // Draw lines after the tree is rendered
+    positionTree(root, window.innerWidth / 2, 20); 
+    drawLines(); 
   } else {
     console.error('No root person found!');
   }
 }
 
-// Get the first generation (root of the tree)
 function getRoot() {
   return Object.entries(data).find(([id, person]) => !person.relations.mother && !person.relations.father)?.[1];
 }
 
-// Position individuals dynamically based on their parent-child relationships
 function positionTree(person, x, y) {
   const container = document.getElementById('tree-container');
   const div = document.createElement('div');
@@ -44,15 +44,13 @@ function positionTree(person, x, y) {
   div.textContent = `${person.name.first} ${person.name.last}`;
   div.onclick = () => showInfoCard(person.id);
 
-  // Set the position of the person
   div.style.position = 'absolute';
-  div.style.left = `${x - nodeWidth / 2}px`; // Center the person horizontally
+  div.style.left = `${x - nodeWidth / 2}px`;
   div.style.top = `${y}px`;
 
   container.appendChild(div);
   nodeMap[person.id] = div;
 
-  // Position children below their parent (in a new row)
   if (person.relations.children.length > 0) {
     let childX = x - (person.relations.children.length - 1) * (nodeWidth + horizontalSpacing) / 2;
     let childY = y + verticalSpacing;
@@ -60,19 +58,14 @@ function positionTree(person, x, y) {
     person.relations.children.forEach(childId => {
       const child = data[childId];
       positionTree(child, childX, childY);
-      childX += nodeWidth + horizontalSpacing; // Adjust horizontal spacing between children
+      childX += nodeWidth + horizontalSpacing; 
     });
   }
 }
 
-// Draw lines to connect parents and children
 function drawLines() {
-  const canvas = document.getElementById('lines');
-  const container = document.getElementById('tree-container');
-  const rect = container.getBoundingClientRect();
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
-  const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.strokeStyle = '#333';
   ctx.lineWidth = 2;
@@ -82,7 +75,6 @@ function drawLines() {
     if (!childEl) return;
     const childRect = childEl.getBoundingClientRect();
 
-    // Draw lines to the parents (if available)
     ['mother', 'father'].forEach(role => {
       const parentId = person.relations[role];
       if (parentId && nodeMap[parentId]) {
@@ -90,15 +82,14 @@ function drawLines() {
         const parentRect = parentEl.getBoundingClientRect();
 
         ctx.beginPath();
-        ctx.moveTo(parentRect.left + parentRect.width / 2, parentRect.bottom - rect.top);
-        ctx.lineTo(childRect.left + childRect.width / 2, childRect.top - rect.top);
+        ctx.moveTo(parentRect.left + parentRect.width / 2, parentRect.bottom);
+        ctx.lineTo(childRect.left + childRect.width / 2, childRect.top);
         ctx.stroke();
       }
     });
   });
 }
 
-// Show info card for a given person
 function showInfoCard(id) {
   const person = data[id];
   if (!person) return;
@@ -119,7 +110,6 @@ function showInfoCard(id) {
   document.body.appendChild(infoCard);
 }
 
-// Open the info cards for a person's parents
 function openParents(id) {
   const person = data[id];
   if (!person) return;
