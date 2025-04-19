@@ -5,9 +5,8 @@ body {
     background-color: #f4f4f4;
 }
 
-.family-tree {
+#family-tree {
     display: flex;
-    justify-content: center;
     flex-direction: column;
     align-items: center;
     margin-top: 50px;
@@ -16,6 +15,9 @@ body {
 .person {
     text-align: center;
     margin: 20px;
+    border: 2px solid #ccc;
+    padding: 10px;
+    border-radius: 8px;
 }
 
 .person img {
