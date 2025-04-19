@@ -6,14 +6,10 @@ fetch('data.json')
     data = fetchedData;
     generations = getGenerations(data);
     renderTree(data, generations);
-    // Draw the connections initially
-    drawConnections();
+    drawConnections(); // Draw connections after initial rendering
   });
 
-// Resize listener to update lines dynamically
-window.addEventListener('resize', () => {
-  drawConnections(); // Redraw connections on resize
-});
+window.addEventListener('resize', drawConnections);
 
 function getGenerations(data) {
   const generations = [];
@@ -62,26 +58,21 @@ function renderTree(data, generations) {
 
 function drawConnections() {
   const svg = document.getElementById('connections');
+  svg.innerHTML = ''; // Clear existing lines
 
-  // Clear existing connections before redrawing
-  while (svg.firstChild) {
-    svg.removeChild(svg.firstChild);
-  }
-
-  // Draw lines for all relationships
   Object.entries(data).forEach(([id, person]) => {
     const from = document.getElementById(`person-${id}`);
 
-    // Spouse line
+    // Draw spouse line
     if (person.relations.spouse) {
       const to = document.getElementById(`person-${person.relations.spouse}`);
-      if (to) drawLine(from, to, svg, 'red'); // Red for spouses
+      if (to) drawLine(from, to, svg, 'red');
     }
 
-    // Child lines
+    // Draw children lines
     person.relations.children.forEach(childId => {
       const to = document.getElementById(`person-${childId}`);
-      if (to) drawLine(from, to, svg, 'blue'); // Blue for parent-child
+      if (to) drawLine(from, to, svg, 'blue');
     });
   });
 }
