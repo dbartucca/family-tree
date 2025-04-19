@@ -1,108 +1,46 @@
-// scripts.js
+body {
+  font-family: sans-serif;
+  background-color: #f4f4f4;
+  text-align: center;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+}
 
-// Fetch and build
-fetch('data.json')
-  .then(response => response.json())
-  .then(data => {
-    const container = document.getElementById('family-tree');
-    const wrapper = document.getElementById('family-tree-container');
-    let maxY = 0;
+h1 {
+  margin: 20px;
+}
 
-    // Function to create a person's block
-    function createPerson(id, info, x, y) {
-      const d = document.createElement('div');
-      d.className = 'person';
-      d.style.left = `${x}px`;
-      d.style.top = `${y}px`;
+#tree-container {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 60px;
+  min-height: 100vh;
+}
 
-      // Track deepest y-coordinate
-      maxY = Math.max(maxY, y);
+.person {
+  width: 150px;
+  background: #fff;
+  margin: 20px;
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  text-align: center;
+  position: absolute;
+}
 
-      // Optional image (jfif first, png fallback)
-      const img = new Image();
-      img.src = `images/${id}.jfif`;
-      img.onload = () => d.prepend(img);
-      img.onerror = () => {
-        const imgPng = new Image();
-        imgPng.src = `images/${id}.png`;
-        imgPng.onload = () => d.prepend(imgPng);
-      };
+.person img {
+  max-width: 100px;
+  height: auto;
+  border-radius: 50%;
+  margin: 10px 0;
+}
 
-      // Name
-      const name = document.createElement('p');
-      name.textContent = `${info.name.first} ${info.name.last}`;
-      d.append(name);
-
-      // Birth info
-      const b = info.birth;
-      const birth = document.createElement('p');
-      birth.textContent = `Born: ${b.month}/${b.day}/${b.year}`;
-      d.append(birth);
-
-      // Bio
-      const bio = document.createElement('p');
-      bio.textContent = info.bio.desc;
-      d.append(bio);
-
-      container.appendChild(d);
-      return d;
-    }
-
-    // Draw relationship lines
-    function drawLine(x1, y1, x2, y2, type) {
-      const line = document.createElement('div');
-      line.classList.add('line', type);
-
-      if (type === 'line-parent-child') {
-        line.style.left = `${x1 + 60}px`;
-        line.style.top = `${y1 + 100}px`;
-        line.style.height = `${Math.abs(y2 - y1) - 100}px`;
-      } else if (type === 'line-spouse') {
-        line.style.left = `${x1 + 80}px`;
-        line.style.top = `${y1 + 60}px`;
-        line.style.width = `${Math.abs(x2 - x1) - 80}px`;
-      }
-
-      container.appendChild(line);
-    }
-
-    // Parent → children
-    function createParentChildBranch(id, info, kids, startX, startY) {
-      createPerson(id, info, startX, startY);
-      let childX = startX;
-      kids.forEach(childId => {
-        createPerson(childId, data[childId], childX, startY + 200);
-        drawLine(startX, startY, childX, startY + 200, 'line-parent-child');
-        childX += 180;
-      });
-    }
-
-    // Spouse side‑by‑side
-    function createSpouseBranch(id, info, startX, startY) {
-      createPerson(id, info, startX, startY);
-      if (info.relations.spouse) {
-        createPerson(info.relations.spouse, data[info.relations.spouse], startX + 180, startY);
-        drawLine(startX, startY, startX + 180, startY, 'line-spouse');
-      }
-    }
-
-    // Build the tree
-    let xOffset = 0;
-    Object.keys(data).forEach(id => {
-      const p = data[id];
-      // render only top‑level (no parents above)
-      if (p.relations.mother || p.relations.father) return;
-
-      if (p.relations.children?.length) {
-        createParentChildBranch(id, p, p.relations.children, xOffset, 0);
-        xOffset += (p.relations.children.length + 1) * 180;
-      } else {
-        createSpouseBranch(id, p, xOffset, 0);
-        xOffset += 360;
-      }
-    });
-
-    // Finally size the wrapper to fit all boxes
-    wrapper.style.height = (maxY + 300) + 'px';
-  })
-  .catch(console.error);
+canvas#connection-lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+}
