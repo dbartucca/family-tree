@@ -1,55 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
   <title>Family Tree</title>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      position: relative;
-      font-family: Arial, sans-serif;
-    }
-
-    #tree-container {
-      position: relative;
-      padding: 20px;
-    }
-
-    .person-row {
-      display: flex;
-      justify-content: center;
-      margin: 20px 0;
-    }
-
-    .person {
-      background-color: #f0f0f0;
-      padding: 10px;
-      margin: 10px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      width: 150px;
-      text-align: center;
-      position: relative;
-      z-index: 1;
-    }
-
-    #connections {
-      position: absolute;
-      top: 0;
-      left: 0;
-      pointer-events: none;
-      z-index: 0;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="tree-container">
-    <canvas id="connections"></canvas>
-    <!-- Family tree elements will be dynamically inserted here -->
+  <h1>Family Tree</h1>
+  <div id="tree-container"></div>
+  <svg id="connection-lines"></svg>
+
+  <!-- Info Card -->
+  <div id="info-card" class="info-card hidden">
+    <div class="info-card-content">
+      <button class="close-btn">&times;</button>
+      <h2 id="info-name"></h2>
+      <p id="info-birth"></p>
+      <p id="info-death"></p>
+      <p id="info-bio"></p>
+      <div id="info-relations"></div>
+    </div>
   </div>
 
-  <script src="scripts.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
