@@ -105,7 +105,6 @@ function showInfoCard(member) {
   const birthEl = document.getElementById("info-birth");
   const deathEl = document.getElementById("info-death");
   const bioEl = document.getElementById("info-bio");
-  const relEl = document.getElementById("info-relations");
 
   const fullName = `${member.name.first} ${member.name.middle ?? ""} ${member.name.last}`;
   nameEl.textContent = fullName;
@@ -116,17 +115,6 @@ function showInfoCard(member) {
     : "";
 
   bioEl.textContent = member.bio.desc;
-
-  relEl.innerHTML = "";
-  const rels = member.relations;
-  for (let key in rels) {
-    const val = rels[key];
-    if (Array.isArray(val) && val.length > 0) {
-      relEl.innerHTML += `<p>${key}: ${val.join(", ")}</p>`;
-    } else if (val && typeof val === "number") {
-      relEl.innerHTML += `<p>${key}: ${val}</p>`;
-    }
-  }
 
   card.classList.remove("hidden");
 }
