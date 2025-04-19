@@ -1,112 +1,144 @@
-let data, generations;
+let data;
 
 fetch('data.json')
   .then(res => res.json())
-  .then(fetchedData => {
-    data = fetchedData;
-    generations = getGenerations(data);
-    renderTree(data, generations);
-    adjustCanvasSize();
+  .then(json => {
+    data = json;
+    renderTree(data);
     drawConnections();
+    window.addEventListener("resize", () => {
+      drawConnections();
+    });
   });
 
-window.addEventListener('resize', () => {
-  adjustCanvasSize();
-  drawConnections();
-});
-
 function getGenerations(data) {
-  const generations = [];
-  for (const [id, person] of Object.entries(data)) {
-    const generation = getGenerationForPerson(data, person);
-    if (!generations[generation]) {
-      generations[generation] = [];
+  const generations = {};
+  const visited = new Set();
+
+  function dfs(id, level) {
+    if (!generations[level]) generations[level] = [];
+    if (visited.has(id)) return;
+    visited.add(id);
+    generations[level].push(id);
+
+    const person = data[id];
+    if (person.relations.children) {
+      person.relations.children.forEach(childId => {
+        dfs(childId, level + 1);
+      });
     }
-    generations[generation].push(id);
   }
+
+  // Start from root(s)
+  Object.keys(data).forEach(id => {
+    const person = data[id];
+    if (!person.relations.father && !person.relations.mother) {
+      dfs(id, 0);
+    }
+  });
+
   return generations;
 }
 
-function getGenerationForPerson(data, person, level = 0) {
-  if (!person.relations.mother && !person.relations.father) return level;
+function renderTree(data) {
+  const container = document.getElementById("tree-container");
+  container.innerHTML = "";
+  const generations = getGenerations(data);
 
-  const mother = person.relations.mother ? data[person.relations.mother] : null;
-  const father = person.relations.father ? data[person.relations.father] : null;
+  Object.keys(generations).forEach(level => {
+    const genDiv = document.createElement("div");
+    genDiv.className = "generation";
+    genDiv.dataset.generation = level;
 
-  let maxLevel = level;
-  if (mother) maxLevel = Math.max(maxLevel, getGenerationForPerson(data, mother, level + 1));
-  if (father) maxLevel = Math.max(maxLevel, getGenerationForPerson(data, father, level + 1));
-
-  return maxLevel;
-}
-
-function renderTree(data, generations) {
-  const container = document.getElementById('tree-container');
-  // Remove existing person rows
-  const existingRows = container.querySelectorAll('.person-row');
-  existingRows.forEach(row => row.remove());
-
-  generations.forEach(generation => {
-    const row = document.createElement('div');
-    row.classList.add('person-row');
-
-    generation.forEach(id => {
-      const person = document.createElement('div');
-      person.classList.add('person');
-      person.id = `person-${id}`;
-      person.innerText = `${data[id].name.first} ${data[id].name.last}`;
-      row.appendChild(person);
+    generations[level].forEach(id => {
+      const person = data[id];
+      const box = document.createElement("div");
+      box.className = "person";
+      box.id = `person-${id}`;
+      box.innerText = `${person.name.first} ${person.name.last}`;
+      box.addEventListener("click", () => showInfoCard(person));
+      genDiv.appendChild(box);
     });
 
-    container.appendChild(row);
+    container.appendChild(genDiv);
   });
-}
-
-function adjustCanvasSize() {
-  const container = document.getElementById('tree-container');
-  const canvas = document.getElementById('connections');
-  canvas.width = container.offsetWidth;
-  canvas.height = container.offsetHeight;
 }
 
 function drawConnections() {
-  const canvas = document.getElementById('connections');
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  ctx.lineWidth = 2;
-  ctx.setLineDash([5, 5]);
+  const svg = document.getElementById("connection-lines");
+  svg.innerHTML = "";
 
   Object.entries(data).forEach(([id, person]) => {
-    const from = document.getElementById(`person-${id}`);
-    if (!from) return;
+    const childEl = document.getElementById(`person-${id}`);
+    if (!childEl) return;
 
-    if (person.relations.spouse) {
-      const to = document.getElementById(`person-${person.relations.spouse}`);
-      if (to) drawLine(from, to, ctx, 'red');
-    }
+    const parents = [person.relations.father, person.relations.mother].filter(Boolean);
+    parents.forEach(parentId => {
+      const parentEl = document.getElementById(`person-${parentId}`);
+      if (!parentEl) return;
 
-    person.relations.children.forEach(childId => {
-      const to = document.getElementById(`person-${childId}`);
-      if (to) drawLine(from, to, ctx, 'blue');
+      const parentRect = parentEl.getBoundingClientRect();
+      const childRect = childEl.getBoundingClientRect();
+
+      const svgRect = svg.getBoundingClientRect();
+      const x1 = parentRect.left + parentRect.width / 2 - svgRect.left;
+      const y1 = parentRect.bottom - svgRect.top;
+      const x2 = childRect.left + childRect.width / 2 - svgRect.left;
+      const y2 = childRect.top - svgRect.top;
+
+      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      line.setAttribute("x1", x1);
+      line.setAttribute("y1", y1);
+      line.setAttribute("x2", x2);
+      line.setAttribute("y2", y2);
+      line.setAttribute("stroke", "#000");
+      line.setAttribute("stroke-width", "2");
+      svg.appendChild(line);
     });
   });
 }
 
-function drawLine(from, to, ctx, color) {
-  const container = document.getElementById('tree-container');
-  const containerRect = container.getBoundingClientRect();
-  const fromRect = from.getBoundingClientRect();
-  const toRect = to.getBoundingClientRect();
+// Info card logic
+function showInfoCard(member) {
+  const card = document.getElementById("info-card");
+  const nameEl = document.getElementById("info-name");
+  const birthEl = document.getElementById("info-birth");
+  const deathEl = document.getElementById("info-death");
+  const bioEl = document.getElementById("info-bio");
+  const relEl = document.getElementById("info-relations");
 
-  const x1 = fromRect.left + fromRect.width / 2 - containerRect.left;
-  const y1 = fromRect.top + fromRect.height / 2 - containerRect.top;
-  const x2 = toRect.left + toRect.width / 2 - containerRect.left;
-  const y2 = toRect.top + toRect.height / 2 - containerRect.top;
+  const fullName = `${member.name.first} ${member.name.middle ?? ""} ${member.name.last}`;
+  nameEl.textContent = fullName;
 
-  ctx.beginPath();
-  ctx.moveTo(x1, y1);
-  ctx.lineTo(x2, y2);
-  ctx.strokeStyle = color;
-  ctx.stroke();
+  birthEl.textContent = `Born: ${member.birth.month}/${member.birth.day}/${member.birth.year}`;
+  deathEl.textContent = member.death
+    ? `Died: ${member.death.month}/${member.death.day}/${member.death.year}`
+    : "";
+
+  bioEl.textContent = member.bio.desc;
+
+  relEl.innerHTML = "";
+  const rels = member.relations;
+  for (let key in rels) {
+    const val = rels[key];
+    if (Array.isArray(val) && val.length > 0) {
+      relEl.innerHTML += `<p>${key}: ${val.join(", ")}</p>`;
+    } else if (val && typeof val === "number") {
+      relEl.innerHTML += `<p>${key}: ${val}</p>`;
+    }
+  }
+
+  card.classList.remove("hidden");
 }
+
+function hideInfoCard() {
+  document.getElementById("info-card").classList.add("hidden");
+}
+
+document.querySelector(".close-btn").addEventListener("click", hideInfoCard);
+window.addEventListener("click", (e) => {
+  const card = document.getElementById("info-card");
+  if (!card.contains(e.target) && !e.target.classList.contains("person")) {
+    hideInfoCard();
+  }
+});
