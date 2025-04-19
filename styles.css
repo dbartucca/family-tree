@@ -26,8 +26,9 @@ header h1 {
   position: relative;
   margin-top: 50px;
   width: 100%;
-  overflow-x: auto;    /* keep horizontal scroll if needed */
-  /* overflow-y: hidden;  ← remove or comment out */
+  /* allow both horizontal and vertical scrolling */
+  overflow-x: auto;
+  overflow-y: auto;
   padding-bottom: 20px;
 }
 
