@@ -20,15 +20,17 @@ function renderTree() {
   const container = document.getElementById('tree-container');
   container.innerHTML = ''; // Clear the container before rendering the tree
   const root = getRoot(); // Get the root (ancestor) of the tree
-  positionTree(root, 0, 0); // Start positioning from the root
-
-  // Draw lines between parents and children
-  drawLines();
+  if (root) {
+    positionTree(root, window.innerWidth / 2, 20); // Start positioning from the root, centered horizontally
+    drawLines(); // Draw lines after the tree is rendered
+  } else {
+    console.error('No root person found!');
+  }
 }
 
 // Get the first generation (root of the tree)
 function getRoot() {
-  return Object.entries(data).find(([id, person]) => !person.relations.mother && !person.relations.father);
+  return Object.entries(data).find(([id, person]) => !person.relations.mother && !person.relations.father)?.[1];
 }
 
 // Position individuals dynamically based on their parent-child relationships
@@ -42,7 +44,7 @@ function positionTree(person, x, y) {
 
   // Set the position of the person
   div.style.position = 'absolute';
-  div.style.left = `${x}px`;
+  div.style.left = `${x - nodeWidth / 2}px`; // Center the person horizontally
   div.style.top = `${y}px`;
 
   container.appendChild(div);
