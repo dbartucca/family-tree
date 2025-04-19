@@ -6,10 +6,13 @@ fetch('data.json')
     data = fetchedData;
     generations = getGenerations(data);
     renderTree(data, generations);
-    drawConnections(); // Draw connections after initial rendering
+    drawConnections(); // Initial drawing of lines
   });
 
-window.addEventListener('resize', drawConnections);
+window.addEventListener('resize', () => {
+  adjustCanvasSize();
+  drawConnections(); // Redraw lines after resize
+});
 
 function getGenerations(data) {
   const generations = [];
@@ -54,6 +57,12 @@ function renderTree(data, generations) {
 
     container.appendChild(row);
   });
+}
+
+function adjustCanvasSize() {
+  const canvas = document.getElementById('connections');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
 }
 
 function drawConnections() {
