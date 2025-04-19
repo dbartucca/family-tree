@@ -6,7 +6,7 @@ fetch('data.json')
     data = fetchedData;
     generations = getGenerations(data);
     renderTree(data, generations);
-    // Draw connections after the page is fully loaded
+    // Initial drawing of connections
     requestAnimationFrame(() => drawConnections(data, generations));
   });
 
@@ -59,32 +59,35 @@ function renderTree(data, generations) {
 
     container.appendChild(row);
   });
+
+  // Ensure to re-trigger line drawing after rendering people
+  requestAnimationFrame(() => drawConnections(data, generations));
 }
 
 function drawConnections(data, generations) {
   const svg = document.getElementById('connections');
-  
-  // Clear existing connections
+
+  // Clear existing connections before drawing new ones
   while (svg.firstChild) {
     svg.removeChild(svg.firstChild);
   }
 
-  // Ensure we calculate positions once the DOM is fully laid out
+  // Redraw connections after elements are rendered
   setTimeout(() => {
     for (const [id, person] of Object.entries(data)) {
       const from = document.getElementById(`person-${id}`);
-  
+
       if (person.relations.spouse) {
         const to = document.getElementById(`person-${person.relations.spouse}`);
         if (to) drawLine(from, to, svg, 'red');
       }
-  
+
       person.relations.children.forEach(childId => {
         const to = document.getElementById(`person-${childId}`);
         if (to) drawLine(from, to, svg, 'blue');
       });
     }
-  }, 0); // Delay execution to let layout settle
+  }, 0); // Ensures drawing happens after layout is complete
 }
 
 function drawLine(from, to, svg, color) {
@@ -95,7 +98,7 @@ function drawLine(from, to, svg, color) {
   const y1 = fromRect.top + fromRect.height / 2;
   const x2 = toRect.left + toRect.width / 2;
   const y2 = toRect.top + toRect.height / 2;
-  
+
   const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
   line.setAttribute('x1', x1);
   line.setAttribute('y1', y1);
