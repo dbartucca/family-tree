@@ -1,95 +1,108 @@
-/* Reset & base */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-body {
-  font-family: 'Roboto', sans-serif;
-  background: #f4f4f4;
-  color: #333;
-  padding: 20px;
-  text-align: center;
-}
+// scripts.js
 
-/* Header */
-header {
-  margin-bottom: 20px;
-}
-header h1 {
-  font-size: 2rem;
-  margin-bottom: 0.5rem;
-}
+// Fetch and build
+fetch('data.json')
+  .then(response => response.json())
+  .then(data => {
+    const container = document.getElementById('family-tree');
+    const wrapper = document.getElementById('family-tree-container');
+    let maxY = 0;
 
-/* Tree container */
-#family-tree-container {
-  position: relative;
-  margin-top: 50px;
-  width: 100%;
-  /* allow both horizontal and vertical scrolling */
-  overflow-x: auto;
-  overflow-y: auto;
-  padding-bottom: 20px;
-}
+    // Function to create a person's block
+    function createPerson(id, info, x, y) {
+      const d = document.createElement('div');
+      d.className = 'person';
+      d.style.left = `${x}px`;
+      d.style.top = `${y}px`;
 
-/* Individual tree element (Person Box) */
-.person {
-  display: inline-block;
-  background: #fff;
-  border: 2px solid #ccc;
-  border-radius: 10px;
-  width: 160px;
-  padding: 15px;
-  text-align: center;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  position: absolute;
-  transition: background 0.2s;
-  cursor: pointer;
-}
+      // Track deepest y-coordinate
+      maxY = Math.max(maxY, y);
 
-.person:hover {
-  background: #e1f5fe;
-}
+      // Optional image (jfif first, png fallback)
+      const img = new Image();
+      img.src = `images/${id}.jfif`;
+      img.onload = () => d.prepend(img);
+      img.onerror = () => {
+        const imgPng = new Image();
+        imgPng.src = `images/${id}.png`;
+        imgPng.onload = () => d.prepend(imgPng);
+      };
 
-/* Image */
-.person img {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  margin-bottom: 10px;
-  object-fit: cover;
-}
+      // Name
+      const name = document.createElement('p');
+      name.textContent = `${info.name.first} ${info.name.last}`;
+      d.append(name);
 
-/* Text */
-.person p {
-  margin: 5px 0;
-  font-size: 0.9rem;
-}
+      // Birth info
+      const b = info.birth;
+      const birth = document.createElement('p');
+      birth.textContent = `Born: ${b.month}/${b.day}/${b.year}`;
+      d.append(birth);
 
-/* Connect lines for relationships */
-.line {
-  position: absolute;
-  background-color: #000;
-  width: 2px;
-}
+      // Bio
+      const bio = document.createElement('p');
+      bio.textContent = info.bio.desc;
+      d.append(bio);
 
-.line-parent-child {
-  height: 50px;
-}
+      container.appendChild(d);
+      return d;
+    }
 
-.line-spouse {
-  width: 50px;
-  height: 2px;
-}
+    // Draw relationship lines
+    function drawLine(x1, y1, x2, y2, type) {
+      const line = document.createElement('div');
+      line.classList.add('line', type);
 
-/* Spouse side-by-side */
-.spouse-container {
-  display: flex;
-  gap: 30px;
-  position: relative;
-}
+      if (type === 'line-parent-child') {
+        line.style.left = `${x1 + 60}px`;
+        line.style.top = `${y1 + 100}px`;
+        line.style.height = `${Math.abs(y2 - y1) - 100}px`;
+      } else if (type === 'line-spouse') {
+        line.style.left = `${x1 + 80}px`;
+        line.style.top = `${y1 + 60}px`;
+        line.style.width = `${Math.abs(x2 - x1) - 80}px`;
+      }
 
-/* Center tree (if more space is needed) */
-#family-tree {
-  position: relative;
-}
+      container.appendChild(line);
+    }
+
+    // Parent → children
+    function createParentChildBranch(id, info, kids, startX, startY) {
+      createPerson(id, info, startX, startY);
+      let childX = startX;
+      kids.forEach(childId => {
+        createPerson(childId, data[childId], childX, startY + 200);
+        drawLine(startX, startY, childX, startY + 200, 'line-parent-child');
+        childX += 180;
+      });
+    }
+
+    // Spouse side‑by‑side
+    function createSpouseBranch(id, info, startX, startY) {
+      createPerson(id, info, startX, startY);
+      if (info.relations.spouse) {
+        createPerson(info.relations.spouse, data[info.relations.spouse], startX + 180, startY);
+        drawLine(startX, startY, startX + 180, startY, 'line-spouse');
+      }
+    }
+
+    // Build the tree
+    let xOffset = 0;
+    Object.keys(data).forEach(id => {
+      const p = data[id];
+      // render only top‑level (no parents above)
+      if (p.relations.mother || p.relations.father) return;
+
+      if (p.relations.children?.length) {
+        createParentChildBranch(id, p, p.relations.children, xOffset, 0);
+        xOffset += (p.relations.children.length + 1) * 180;
+      } else {
+        createSpouseBranch(id, p, xOffset, 0);
+        xOffset += 360;
+      }
+    });
+
+    // Finally size the wrapper to fit all boxes
+    wrapper.style.height = (maxY + 300) + 'px';
+  })
+  .catch(console.error);
