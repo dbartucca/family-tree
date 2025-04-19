@@ -12,17 +12,27 @@ fetch('data.json')
       const personDiv = document.createElement('div');
       personDiv.classList.add('person');
 
-      // Create the image element (this assumes image names are based on person ID)
-      const img = document.createElement('img');
-      img.src = `images/${personId}.jfif`; // Use .jfif or .png images
-      img.alt = `${person.name.first} ${person.name.last}`;
+      // Check if the image exists
+      const imageUrl = `images/${personId}.jfif`; // Use .jfif or .png images
+      const imgCheck = new Image();
+      imgCheck.src = imageUrl;
+
+      // If the image exists, create the img element, otherwise skip it
+      imgCheck.onload = function() {
+        const img = document.createElement('img');
+        img.src = imageUrl;
+        img.alt = `${person.name.first} ${person.name.last}`;
+        personDiv.appendChild(img); // Append the image to the container
+      };
+
+      imgCheck.onerror = function() {
+        // Skip adding the image if it doesn't exist
+        // Just continue with the rest of the content
+      };
 
       // Create the person's name
       const name = document.createElement('p');
       name.textContent = `${person.name.first} ${person.name.last}`;
-
-      // Append the image and name to the person container
-      personDiv.appendChild(img);
       personDiv.appendChild(name);
 
       // Display birth info
@@ -42,12 +52,6 @@ fetch('data.json')
 
       // Append the family member to the family tree container
       familyTreeContainer.appendChild(personDiv);
-
-      // If the person has children, recursively display them
-      if (person.relations.mother || person.relations.father) {
-        // You could add logic here to show the children under this person
-        // For simplicity, let's leave that for future enhancements.
-      }
     }
   })
   .catch(error => {
