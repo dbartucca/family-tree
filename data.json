@@ -1,5 +1,5 @@
 {
-  "1": {
+  1: {
     "name": {
       "first": "Delia",
       "middle": "Maureen",
@@ -24,7 +24,7 @@
       "gender": "F"
     }
   },
-  "2": {
+  2: {
     "name": {
       "first": "Caroline",
       "middle":"Theresa",
@@ -49,7 +49,7 @@
       "gender": "F"
     }
   },
-  "3": {
+  3: {
     "name": {
       "first": "Domenic",
       "middle":"Christopher",
@@ -74,7 +74,7 @@
       "gender": "M"
     }
   },
-  "4": {
+  4: {
     "name": {
       "first": "Brendan",
       "middle":"Michael",
@@ -99,7 +99,7 @@
       "gender": "M"
     }
   },
-  "5": {
+  5: {
     "name": {
       "first": "Michael",
       "middle":"Patrick",
@@ -124,7 +124,7 @@
       "gender": "M"
     }
   },
-  "6": {
+  6: {
     "name": {
       "first": "Maureen",
       "middle":"Theresa",
@@ -134,6 +134,14 @@
       "year": 1947,
       "month": 10,
       "day": 12,
+      "city": "Boston",
+      "state": "Massachusetts",
+      "country": "US"
+    },
+    "death": {
+      "year": 2008,
+      "month": 7,
+      "day": 15,
       "city": "Brighton",
       "state": "Massachusetts",
       "country": "US"
@@ -149,7 +157,7 @@
       "gender": "F"
     }
   },
-  "7": {
+  7: {
     "name": {
       "first": "Delia",
       "middle":"Frances",
@@ -174,7 +182,7 @@
       "gender": "F"
     }
   },
-  "8": {
+  8: {
     "name": {
       "first": "Frank",
       "middle":null,
@@ -188,6 +196,14 @@
       "state": "West Virginia",
       "country": "US"
     },
+    "death": {
+      "year": 1995,
+      "month": 9,
+      "day": 12,
+      "city": "Las Vegas",
+      "state": "Nevada",
+      "country": "US"
+    },
     "relations": {
       "mother": null,
       "father": null,
@@ -199,7 +215,7 @@
       "gender": "M"
     }
   },
-  "9": {
+  9: {
     "name": {
       "first": "Michael",
       "middle":"Patrick",
