@@ -1,4 +1,3 @@
-// Declare the data variable to hold family data, and nodeMap to store references to each person's element
 let data = {};
 const nodeMap = {};
 
@@ -15,7 +14,6 @@ const nodeHeight = 100; // Height of each person's box
 const verticalSpacing = 200; // Space between generations
 const horizontalSpacing = 150; // Space between siblings
 
-// This function is responsible for rendering the family tree
 function renderTree() {
   const container = document.getElementById('tree-container');
   container.innerHTML = ''; // Clear the container before rendering the tree
