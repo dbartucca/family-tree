@@ -2,11 +2,10 @@ fetch('data.json')
   .then(res => res.json())
   .then(data => {
     const generations = getGenerations(data);
-    renderTree(generations);
-    drawConnections(data, generations);
+    renderTree(data, generations);  // Pass `data` to `renderTree`
+    drawConnections(data, generations);  // Pass `data` to `drawConnections`
   });
 
-// Get the generations from the data
 function getGenerations(data) {
   const generations = [];
   for (const [id, person] of Object.entries(data)) {
@@ -19,7 +18,6 @@ function getGenerations(data) {
   return generations;
 }
 
-// Determine the generation level for a person
 function getGenerationForPerson(data, person, level = 0) {
   if (!person.relations.mother && !person.relations.father) return level;
 
@@ -33,8 +31,7 @@ function getGenerationForPerson(data, person, level = 0) {
   return maxLevel;
 }
 
-// Render the tree with grid layout
-function renderTree(generations) {
+function renderTree(data, generations) {
   const container = document.getElementById('tree-container');
 
   generations.forEach(generation => {
@@ -53,20 +50,17 @@ function renderTree(generations) {
   });
 }
 
-// Draw connections between parents and children, and spouses
 function drawConnections(data, generations) {
   const svg = document.getElementById('connections');
   
   for (const [id, person] of Object.entries(data)) {
     const from = document.getElementById(`person-${id}`);
 
-    // Draw spouse connection (only draw once)
     if (person.relations.spouse) {
       const to = document.getElementById(`person-${person.relations.spouse}`);
       if (to) drawLine(from, to, svg, 'red');
     }
 
-    // Draw children connections
     person.relations.children.forEach(childId => {
       const to = document.getElementById(`person-${childId}`);
       if (to) drawLine(from, to, svg, 'blue');
@@ -74,7 +68,6 @@ function drawConnections(data, generations) {
   }
 }
 
-// Draw a line between two elements
 function drawLine(from, to, svg, color) {
   const fromRect = from.getBoundingClientRect();
   const toRect = to.getBoundingClientRect();
