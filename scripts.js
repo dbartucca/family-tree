@@ -57,27 +57,33 @@ function renderTree(data, generations) {
 }
 
 function drawConnections() {
-  const svg = document.getElementById('connections');
-  svg.innerHTML = ''; // Clear existing lines
+  const canvas = document.getElementById('connections');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear previous lines
 
+  // Set line styles
+  ctx.lineWidth = 2;
+  ctx.setLineDash([5, 5]);
+
+  // Draw lines for all relationships
   Object.entries(data).forEach(([id, person]) => {
     const from = document.getElementById(`person-${id}`);
 
-    // Draw spouse line
+    // Spouse line
     if (person.relations.spouse) {
       const to = document.getElementById(`person-${person.relations.spouse}`);
-      if (to) drawLine(from, to, svg, 'red');
+      if (to) drawLine(from, to, ctx, 'red');
     }
 
-    // Draw children lines
+    // Child lines
     person.relations.children.forEach(childId => {
       const to = document.getElementById(`person-${childId}`);
-      if (to) drawLine(from, to, svg, 'blue');
+      if (to) drawLine(from, to, ctx, 'blue');
     });
   });
 }
 
-function drawLine(from, to, svg, color) {
+function drawLine(from, to, ctx, color) {
   const fromRect = from.getBoundingClientRect();
   const toRect = to.getBoundingClientRect();
 
@@ -87,14 +93,10 @@ function drawLine(from, to, svg, color) {
   const x2 = toRect.left + toRect.width / 2;
   const y2 = toRect.top + toRect.height / 2;
 
-  // Create a new line in the SVG
-  const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-  line.setAttribute('x1', x1);
-  line.setAttribute('y1', y1);
-  line.setAttribute('x2', x2);
-  line.setAttribute('y2', y2);
-  line.setAttribute('stroke', color);
-  line.setAttribute('stroke-width', 2);
-  line.setAttribute('stroke-dasharray', '5,5');
-  svg.appendChild(line);
+  // Draw the line
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.strokeStyle = color;
+  ctx.stroke();
 }
