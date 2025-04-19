@@ -1,10 +1,18 @@
+let data, generations;
+
 fetch('data.json')
   .then(res => res.json())
-  .then(data => {
-    const generations = getGenerations(data);
-    renderTree(data, generations);  // Pass `data` to `renderTree`
-    drawConnections(data, generations);  // Pass `data` to `drawConnections`
+  .then(fetchedData => {
+    data = fetchedData;
+    generations = getGenerations(data);
+    renderTree(data, generations);
+    drawConnections(data, generations);
   });
+
+// Resize listener to update lines dynamically
+window.addEventListener('resize', () => {
+  drawConnections(data, generations);  // Redraw lines on resize
+});
 
 function getGenerations(data) {
   const generations = [];
@@ -33,6 +41,7 @@ function getGenerationForPerson(data, person, level = 0) {
 
 function renderTree(data, generations) {
   const container = document.getElementById('tree-container');
+  container.innerHTML = ''; // Clear container before re-rendering
 
   generations.forEach(generation => {
     const row = document.createElement('div');
@@ -53,6 +62,11 @@ function renderTree(data, generations) {
 function drawConnections(data, generations) {
   const svg = document.getElementById('connections');
   
+  // Clear existing connections
+  while (svg.firstChild) {
+    svg.removeChild(svg.firstChild);
+  }
+
   for (const [id, person] of Object.entries(data)) {
     const from = document.getElementById(`person-${id}`);
 
