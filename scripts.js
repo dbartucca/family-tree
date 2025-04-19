@@ -6,12 +6,13 @@ fetch('data.json')
     data = fetchedData;
     generations = getGenerations(data);
     renderTree(data, generations);
-    drawConnections(); // Initial drawing of lines
+    adjustCanvasSize();
+    drawConnections();
   });
 
 window.addEventListener('resize', () => {
   adjustCanvasSize();
-  drawConnections(); // Redraw lines after resize
+  drawConnections();
 });
 
 function getGenerations(data) {
@@ -41,7 +42,9 @@ function getGenerationForPerson(data, person, level = 0) {
 
 function renderTree(data, generations) {
   const container = document.getElementById('tree-container');
-  container.innerHTML = ''; // Clear container before re-rendering
+  // Remove existing person rows
+  const existingRows = container.querySelectorAll('.person-row');
+  existingRows.forEach(row => row.remove());
 
   generations.forEach(generation => {
     const row = document.createElement('div');
@@ -60,31 +63,29 @@ function renderTree(data, generations) {
 }
 
 function adjustCanvasSize() {
+  const container = document.getElementById('tree-container');
   const canvas = document.getElementById('connections');
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+  canvas.width = container.offsetWidth;
+  canvas.height = container.offsetHeight;
 }
 
 function drawConnections() {
   const canvas = document.getElementById('connections');
   const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear previous lines
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Set line styles
   ctx.lineWidth = 2;
   ctx.setLineDash([5, 5]);
 
-  // Draw lines for all relationships
   Object.entries(data).forEach(([id, person]) => {
     const from = document.getElementById(`person-${id}`);
+    if (!from) return;
 
-    // Spouse line
     if (person.relations.spouse) {
       const to = document.getElementById(`person-${person.relations.spouse}`);
       if (to) drawLine(from, to, ctx, 'red');
     }
 
-    // Child lines
     person.relations.children.forEach(childId => {
       const to = document.getElementById(`person-${childId}`);
       if (to) drawLine(from, to, ctx, 'blue');
@@ -93,16 +94,16 @@ function drawConnections() {
 }
 
 function drawLine(from, to, ctx, color) {
+  const container = document.getElementById('tree-container');
+  const containerRect = container.getBoundingClientRect();
   const fromRect = from.getBoundingClientRect();
   const toRect = to.getBoundingClientRect();
 
-  // Calculate the mid-points of both elements
-  const x1 = fromRect.left + fromRect.width / 2;
-  const y1 = fromRect.top + fromRect.height / 2;
-  const x2 = toRect.left + toRect.width / 2;
-  const y2 = toRect.top + toRect.height / 2;
+  const x1 = fromRect.left + fromRect.width / 2 - containerRect.left;
+  const y1 = fromRect.top + fromRect.height / 2 - containerRect.top;
+  const x2 = toRect.left + toRect.width / 2 - containerRect.left;
+  const y2 = toRect.top + toRect.height / 2 - containerRect.top;
 
-  // Draw the line
   ctx.beginPath();
   ctx.moveTo(x1, y1);
   ctx.lineTo(x2, y2);
