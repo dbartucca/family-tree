@@ -4,10 +4,12 @@ fetch('data.json')
   .then(data => {
     const container = document.getElementById('family-tree');
 
-    // Create person card
-    function makePerson(id, info) {
+    // Function to create a person's block
+    function createPerson(id, info, x, y) {
       const d = document.createElement('div');
       d.className = 'person';
+      d.style.left = `${x}px`;
+      d.style.top = `${y}px`;
 
       // Optional image
       const img = new Image();
@@ -35,52 +37,74 @@ fetch('data.json')
       bio.textContent = info.bio.desc;
       d.append(bio);
 
+      container.append(d);
       return d;
     }
 
-    // Parent → children branch
-    function branch(parentId) {
-      const parent = makePerson(parentId, data[parentId]);
-      const kids = data[parentId].relations.children || [];
-      if (kids.length) {
-        const cDiv = document.createElement('div');
-        cDiv.className = 'children';
-        kids.forEach(cid => cDiv.append(makePerson(cid, data[cid])));
-        parent.append(cDiv);
+    // Create relationship lines
+    function drawLine(x1, y1, x2, y2, type) {
+      const line = document.createElement('div');
+      line.classList.add('line');
+      line.classList.add(type);
+      if (type === 'line-parent-child') {
+        line.style.left = `${x1 + 60}px`; // Center of parent box
+        line.style.top = `${y1 + 100}px`; // Just below the parent box
+        line.style.width = `${Math.abs(x2 - x1) - 60}px`;
+      } else if (type === 'line-spouse') {
+        line.style.left = `${x1 + 80}px`; // Adjust for spouse distance
+        line.style.top = `${y1 + 45}px`; // Center of the spouse boxes
+        line.style.width = `${Math.abs(x2 - x1)}px`;
       }
-      return parent;
+      container.appendChild(line);
     }
 
-    // Spouse side‐by‐side
-    function spousePair(id) {
-      const info = data[id];
-      if (!info.relations.spouse) return makePerson(id, info);
-      const sId = info.relations.spouse;
-      const wrap = document.createElement('div');
-      wrap.className = 'spouse-container';
-      wrap.append(makePerson(id, info), makePerson(sId, data[sId]));
-      return wrap;
-    }
-
-    // Build everything
-    Object.keys(data).forEach(id => {
-      const rel = data[id].relations;
-      // only render top‐level blocks (parent branches or spouse pairs)
-      if (rel.mother || rel.father) return; 
-      if (rel.children?.length) {
-        container.append(branch(id));
-      } else {
-        container.append(spousePair(id));
-      }
-    });
-
-    // Simple search
-    document.getElementById('search').addEventListener('input', e => {
-      const q = e.target.value.toLowerCase();
-      document.querySelectorAll('.person').forEach(p => {
-        const txt = p.textContent.toLowerCase();
-        p.style.display = txt.includes(q) ? '' : 'none';
+    // Create parent-child relationships (horizontal)
+    function createParentChildBranch(parentId, parent, childrenIds, startX, startY) {
+      const parentBox = createPerson(parentId, parent, startX, startY);
+      let nextX = startX;
+      const childBoxes = [];
+      childrenIds.forEach((childId, index) => {
+        const child = data[childId];
+        const childBox = createPerson(childId, child, nextX, startY + 200); // Space children below the parent
+        childBoxes.push(childBox);
+        nextX += 180; // Increase spacing for the next child
+        drawLine(startX + 60, startY + 100, nextX - 60, startY + 200, 'line-parent-child'); // Parent to child line
       });
+
+      return { parentBox, childBoxes };
+    }
+
+    // Create spouse relationships (side by side)
+    function createSpouseBranch(personId, person, startX, startY) {
+      const spouseBox = createPerson(personId, person, startX, startY);
+      if (person.relations.spouse) {
+        const spouseId = person.relations.spouse;
+        const spouse = data[spouseId];
+        const spouseBox2 = createPerson(spouseId, spouse, startX + 180, startY); // Place spouse next to the person
+        drawLine(startX + 60, startY + 100, startX + 180 + 60, startY + 100, 'line-spouse'); // Spouse line
+        return { personBox: spouseBox, spouseBox: spouseBox2 };
+      }
+      return { personBox: spouseBox };
+    }
+
+    // Build family tree
+    let xOffset = 0;
+    Object.keys(data).forEach(id => {
+      const person = data[id];
+      const rel = person.relations;
+
+      // Only render top-level blocks (parents have children, or spouse has no parent)
+      if (rel.mother || rel.father) return;
+
+      // Handle parents and children
+      if (rel.children?.length) {
+        const { parentBox, childBoxes } = createParentChildBranch(id, person, rel.children, xOffset, 0);
+        xOffset += 180 * (childBoxes.length + 1); // Add space for next set of children
+      } else {
+        const { personBox, spouseBox } = createSpouseBranch(id, person, xOffset, 0);
+        xOffset += 180 * 2; // Account for both spouse and person
+      }
     });
+
   })
   .catch(console.error);
