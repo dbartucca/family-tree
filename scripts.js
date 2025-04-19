@@ -14,21 +14,8 @@ fetch('data.json')
 
       // Create the image element (this assumes image names are based on person ID)
       const img = document.createElement('img');
+      img.src = `images/${personId}.jfif`; // Use .jfif or .png images
       img.alt = `${person.name.first} ${person.name.last}`;
-
-      // Try to load the person's image
-      const imageUrl = `images/${personId}.jfif`; // Use .jfif or .png images
-      const placeholderImage = 'images/placeholder.png'; // Default placeholder image
-
-      // Create an image element with a fallback
-      const imgCheck = new Image();
-      imgCheck.src = imageUrl;
-      imgCheck.onload = function() {
-        img.src = imageUrl; // If the image exists, set the source
-      };
-      imgCheck.onerror = function() {
-        img.src = placeholderImage; // If the image doesn't exist, use the placeholder
-      };
 
       // Create the person's name
       const name = document.createElement('p');
@@ -56,4 +43,13 @@ fetch('data.json')
       // Append the family member to the family tree container
       familyTreeContainer.appendChild(personDiv);
 
-      // If the
+      // If the person has children, recursively display them
+      if (person.relations.mother || person.relations.father) {
+        // You could add logic here to show the children under this person
+        // For simplicity, let's leave that for future enhancements.
+      }
+    }
+  })
+  .catch(error => {
+    console.error('Error loading data:', error);
+  });
