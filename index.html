@@ -1,29 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Family Tree</title>
-
-  <!-- Link to external CSS file -->
-  <link rel="stylesheet" href="styles.css">
-
-  <!-- Optional: include a font -->
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
-
-  <header>
-    <h1>My Family Tree</h1>
-    <p>Explore our generations</p>
-  </header>
-
-  <!-- Container for the tree -->
-  <div id="family-tree-container">
-    <div id="family-tree"></div>
-  </div>
-
-  <!-- Load the tree builder -->
+  <h1>My Family Tree</h1>
+  <div id="tree-container"></div>
+  <canvas id="connection-lines"></canvas>
   <script src="scripts.js"></script>
 </body>
 </html>
