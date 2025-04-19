@@ -1,71 +1,129 @@
-async function loadTree() {
-  const response = await fetch('data.json');
-  const data = await response.json();
-  const container = document.getElementById('tree-container');
-  const canvas = document.getElementById('connection-lines');
+async function loadData() {
+  const res = await fetch('data.json');
+  return await res.json();
+}
+
+function createPersonBox(id, person) {
+  const div = document.createElement('div');
+  div.className = 'person';
+  div.id = `person-${id}`;
+
+  const img = new Image();
+  img.src = `images/${id}.png`;
+  img.onerror = () => {
+    img.src = `images/${id}.jfif`;
+    img.onerror = null;
+  };
+
+  img.alt = `${person.name.first}'s photo`;
+  img.onload = () => div.prepend(img);
+
+  const fullName = `${person.name.first} ${person.name.middle} ${person.name.last}`.replace(/\s+/g, ' ').trim();
+  const info = document.createElement('div');
+  info.innerHTML = `<strong>${fullName}</strong><br><small>Born ${person.birth.year}</small>`;
+  div.appendChild(info);
+
+  return div;
+}
+
+function assignGenerations(data) {
+  const gens = {};
+  const visited = new Set();
+
+  function dfs(id, generation) {
+    if (visited.has(id)) return;
+    visited.add(id);
+
+    if (!gens[generation]) gens[generation] = [];
+    gens[generation].push(id);
+
+    const person = data[id];
+    if (person.relations?.mother) dfs(person.relations.mother, generation - 1);
+    if (person.relations?.father) dfs(person.relations.father, generation - 1);
+    if (person.relations?.spouse) dfs(person.relations.spouse, generation);
+  }
+
+  // Start from people with no parents
+  Object.keys(data).forEach(id => {
+    const p = data[id];
+    if (!p.relations?.mother && !p.relations?.father) dfs(id, 0);
+  });
+
+  return gens;
+}
+
+function positionPeople(data, generations, container) {
+  const positions = {};
+  let y = 50;
+  const spacingX = 200;
+  const spacingY = 180;
+
+  Object.keys(generations).sort((a, b) => a - b).forEach(genLevel => {
+    const ids = generations[genLevel];
+    let x = 50;
+    ids.forEach(id => {
+      const person = data[id];
+      const box = createPersonBox(id, person);
+      box.style.left = `${x}px`;
+      box.style.top = `${y}px`;
+      container.appendChild(box);
+      positions[id] = { x: x + 80, y: y + 40 }; // center of the box
+      x += spacingX;
+    });
+    y += spacingY;
+  });
+
+  return positions;
+}
+
+function drawLines(data, positions) {
+  const canvas = document.getElementById('connection-canvas');
   const ctx = canvas.getContext('2d');
 
   canvas.width = document.body.scrollWidth;
   canvas.height = document.body.scrollHeight;
 
-  const positions = {};
-  let x = 100;
-  let y = 100;
-  const offsetY = 220;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  Object.keys(data).forEach((id, index) => {
-    const person = data[id];
-    const div = document.createElement('div');
-    div.className = 'person';
-    div.id = `person-${id}`;
-    div.style.left = `${x}px`;
-    div.style.top = `${y}px`;
-
-    const imgPath = `images/${id}.png`;
-    const jfifPath = `images/${id}.jfif`;
-
-    const img = new Image();
-    img.onload = () => div.appendChild(img);
-    img.onerror = () => {}; // no image
-    img.src = imgPath;
-    img.onerror = () => {
-      img.src = jfifPath;
-      img.onerror = () => {}; // no image at all
-    };
-
-    const name = `${person.name.first} ${person.name.middle} ${person.name.last}`.replace(/\s+/g, ' ').trim();
-    const info = document.createElement('div');
-    info.innerHTML = `<strong>${name}</strong><br/>Born: ${person.birth.year}`;
-    div.appendChild(info);
-
-    container.appendChild(div);
-    positions[id] = { x: x + 75, y: y + 40 }; // center of box
-    x += 250;
-    if (x > window.innerWidth - 200) {
-      x = 100;
-      y += offsetY;
-    }
-  });
-
-  // Draw lines
-  Object.keys(data).forEach((id) => {
+  Object.keys(data).forEach(id => {
     const person = data[id];
     const from = positions[id];
     if (!from) return;
 
-    ['mother', 'father', 'spouse'].forEach(rel => {
-      const relId = person.relations[rel];
-      if (relId && positions[relId]) {
-        const to = positions[relId];
+    ['mother', 'father'].forEach(role => {
+      const parentId = person.relations?.[role];
+      if (parentId && positions[parentId]) {
+        const to = positions[parentId];
         ctx.beginPath();
         ctx.moveTo(from.x, from.y);
         ctx.lineTo(to.x, to.y);
-        ctx.strokeStyle = rel === 'spouse' ? 'green' : 'black';
+        ctx.strokeStyle = '#444';
         ctx.lineWidth = 1.5;
         ctx.stroke();
       }
     });
+
+    const spouseId = person.relations?.spouse;
+    if (spouseId && positions[spouseId]) {
+      const to = positions[spouseId];
+      ctx.beginPath();
+      ctx.moveTo(from.x, from.y);
+      ctx.lineTo(to.x, to.y);
+      ctx.strokeStyle = '#00aa00';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([5, 3]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
   });
 }
 
-window.onload = loadTree;
+async function renderTree() {
+  const data = await loadData();
+  const generations = assignGenerations(data);
+  const nodesContainer = document.getElementById('nodes-container');
+  const positions = positionPeople(data, generations, nodesContainer);
+  drawLines(data, positions);
+}
+
+window.onload = renderTree;
