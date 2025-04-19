@@ -4,33 +4,27 @@ fetch('data.json')
   .then(data => {
     const familyTreeContainer = document.getElementById('family-tree');
 
-    // Iterate through each person in the data
-    for (const personId in data) {
-      const person = data[personId];
-
-      // Create the family member container
+    // Function to create a family member's block
+    function createFamilyMember(personId, person) {
       const personDiv = document.createElement('div');
       personDiv.classList.add('person');
 
-      // Check if the image exists
-      const imageUrl = `images/${personId}.jfif`; // Use .jfif or .png images
+      // Create the image element (handle missing images)
+      const img = document.createElement('img');
+      const imageUrl = `images/${personId}.jfif`;
       const imgCheck = new Image();
       imgCheck.src = imageUrl;
-
-      // If the image exists, create the img element, otherwise skip it
       imgCheck.onload = function() {
-        const img = document.createElement('img');
         img.src = imageUrl;
-        img.alt = `${person.name.first} ${person.name.last}`;
-        personDiv.appendChild(img); // Append the image to the container
       };
-
       imgCheck.onerror = function() {
-        // Skip adding the image if it doesn't exist
-        // Just continue with the rest of the content
+        // No image, leave it empty
+        img.src = '';
       };
+      img.alt = `${person.name.first} ${person.name.last}`;
+      personDiv.appendChild(img);
 
-      // Create the person's name
+      // Add the person's name
       const name = document.createElement('p');
       name.textContent = `${person.name.first} ${person.name.last}`;
       personDiv.appendChild(name);
@@ -45,13 +39,56 @@ fetch('data.json')
       bio.textContent = person.bio.desc;
       personDiv.appendChild(bio);
 
-      // Display relations (mother, father, spouse)
-      const relations = document.createElement('p');
-      relations.textContent = `Mother: ${person.relations.mother || 'N/A'}, Father: ${person.relations.father || 'N/A'}, Spouse: ${person.relations.spouse || 'N/A'}`;
-      personDiv.appendChild(relations);
+      return personDiv;
+    }
 
-      // Append the family member to the family tree container
-      familyTreeContainer.appendChild(personDiv);
+    // Function to create parent-child relationships
+    function createParentChildBranch(parentId, parent, childrenIds) {
+      const parentDiv = createFamilyMember(parentId, parent);
+      const childrenDiv = document.createElement('div');
+      childrenDiv.classList.add('children');
+
+      // Create child elements
+      childrenIds.forEach(childId => {
+        const child = data[childId];
+        const childDiv = createFamilyMember(childId, child);
+        childrenDiv.appendChild(childDiv);
+      });
+
+      parentDiv.appendChild(childrenDiv);
+      return parentDiv;
+    }
+
+    // Function to create spouse relationship
+    function createSpouseBranch(personId, person) {
+      const personDiv = createFamilyMember(personId, person);
+      if (person.relations.spouse) {
+        const spouseId = person.relations.spouse;
+        const spouse = data[spouseId];
+        const spouseDiv = createFamilyMember(spouseId, spouse);
+        // Position them side by side as spouses
+        const spouseContainer = document.createElement('div');
+        spouseContainer.classList.add('spouse-container');
+        spouseContainer.appendChild(personDiv);
+        spouseContainer.appendChild(spouseDiv);
+        return spouseContainer;
+      }
+      return personDiv;
+    }
+
+    // Build the family tree for each person
+    for (const personId in data) {
+      const person = data[personId];
+      let familyMemberDiv;
+
+      // Check if the person has children and create parent-child branch
+      if (person.relations.children && person.relations.children.length > 0) {
+        familyMemberDiv = createParentChildBranch(personId, person, person.relations.children);
+      } else {
+        familyMemberDiv = createSpouseBranch(personId, person);
+      }
+
+      familyTreeContainer.appendChild(familyMemberDiv);
     }
   })
   .catch(error => {
