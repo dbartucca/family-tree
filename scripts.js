@@ -1,123 +1,125 @@
-let data = {};
-const nodeMap = {};
+const data = {
+    "1": {
+        "name": {
+            "first": "Delia",
+            "middle": "Maureen",
+            "last": "Bartucca"
+        },
+        "relations": {
+            "mother": 2,
+            "father": 3,
+            "spouse": null,
+            "children": [4]
+        },
+        "bio": {
+            "desc": "Bio of Delia",
+            "gender": "F"
+        }
+    },
+    "2": {
+        "name": {
+            "first": "Caroline",
+            "middle": "Theresa",
+            "last": "Bartucca"
+        },
+        "relations": {
+            "mother": null,
+            "father": null,
+            "spouse": 3,
+            "children": [1, 4]
+        },
+        "bio": {
+            "desc": "Bio of Caroline",
+            "gender": "F"
+        }
+    },
+    "3": {
+        "name": {
+            "first": "Domenic",
+            "middle": "Christopher",
+            "last": "Bartucca"
+        },
+        "relations": {
+            "mother": null,
+            "father": null,
+            "spouse": 2,
+            "children": [1, 4]
+        },
+        "bio": {
+            "desc": "Bio of Domenic",
+            "gender": "M"
+        }
+    },
+    "4": {
+        "name": {
+            "first": "Brendan",
+            "middle": "Michael",
+            "last": "Bartucca"
+        },
+        "relations": {
+            "mother": 2,
+            "father": 3,
+            "spouse": null,
+            "children": []
+        },
+        "bio": {
+            "desc": "Bio of Brendan",
+            "gender": "M"
+        }
+    }
+};
 
-fetch('data.json')
-  .then(res => res.json())
-  .then(json => {
-    data = json;
-    renderTree(); // Start rendering the tree once the data is fetched
-    window.addEventListener('resize', drawLines); // Redraw lines when resizing the window
-  });
+let treeContainer = document.getElementById("family-tree");
 
-const nodeWidth = 180;
-const nodeHeight = 100;
-const verticalSpacing = 200;
-const horizontalSpacing = 150;
+function createFamilyMemberBox(memberId) {
+    const member = data[memberId];
+    const memberBox = document.createElement("div");
+    memberBox.classList.add("family-member");
 
-const treeContainer = document.getElementById('tree-container');
-const canvas = document.getElementById('lines');
-const ctx = canvas.getContext('2d');
+    const boxContent = document.createElement("div");
+    boxContent.classList.add("family-member-box");
+    boxContent.innerHTML = `
+        <div class="name">${member.name.first} ${member.name.last}</div>
+        <div class="bio">${member.bio.desc}</div>
+    `;
 
-treeContainer.style.position = 'relative'; 
+    const infoCard = document.createElement("div");
+    infoCard.classList.add("info-card");
+    infoCard.innerHTML = `
+        <div><strong>Bio:</strong> ${member.bio.desc}</div>
+        <div><strong>Gender:</strong> ${member.bio.gender}</div>
+    `;
+    boxContent.appendChild(infoCard);
 
-function renderTree() {
-  const container = document.getElementById('tree-container');
-  container.innerHTML = ''; 
-  const root = getRoot(); 
-  if (root) {
-    positionTree(root, window.innerWidth / 2, 20); 
-    drawLines(); 
-  } else {
-    console.error('No root person found!');
-  }
+    memberBox.appendChild(boxContent);
+
+    // Parent buttons
+    if (member.relations.mother) {
+        const parentButton = document.createElement("button");
+        parentButton.textContent = "Mother";
+        parentButton.onclick = () => {
+            createFamilyMemberBox(member.relations.mother);
+        };
+        memberBox.appendChild(parentButton);
+    }
+
+    if (member.relations.father) {
+        const parentButton = document.createElement("button");
+        parentButton.textContent = "Father";
+        parentButton.onclick = () => {
+            createFamilyMemberBox(member.relations.father);
+        };
+        memberBox.appendChild(parentButton);
+    }
+
+    return memberBox;
 }
 
-function getRoot() {
-  return Object.entries(data).find(([id, person]) => !person.relations.mother && !person.relations.father)?.[1];
-}
-
-function positionTree(person, x, y) {
-  const container = document.getElementById('tree-container');
-  const div = document.createElement('div');
-  div.className = 'person';
-  div.id = `person-${person.id}`;
-  div.textContent = `${person.name.first} ${person.name.last}`;
-  div.onclick = () => showInfoCard(person.id);
-
-  div.style.position = 'absolute';
-  div.style.left = `${x - nodeWidth / 2}px`;
-  div.style.top = `${y}px`;
-
-  container.appendChild(div);
-  nodeMap[person.id] = div;
-
-  if (person.relations.children.length > 0) {
-    let childX = x - (person.relations.children.length - 1) * (nodeWidth + horizontalSpacing) / 2;
-    let childY = y + verticalSpacing;
-
-    person.relations.children.forEach(childId => {
-      const child = data[childId];
-      positionTree(child, childX, childY);
-      childX += nodeWidth + horizontalSpacing; 
+function renderFamilyTree() {
+    Object.keys(data).forEach(memberId => {
+        const memberBox = createFamilyMemberBox(memberId);
+        treeContainer.appendChild(memberBox);
     });
-  }
 }
 
-function drawLines() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.strokeStyle = '#333';
-  ctx.lineWidth = 2;
-
-  Object.entries(data).forEach(([id, person]) => {
-    const childEl = nodeMap[person.id];
-    if (!childEl) return;
-    const childRect = childEl.getBoundingClientRect();
-
-    ['mother', 'father'].forEach(role => {
-      const parentId = person.relations[role];
-      if (parentId && nodeMap[parentId]) {
-        const parentEl = nodeMap[parentId];
-        const parentRect = parentEl.getBoundingClientRect();
-
-        ctx.beginPath();
-        ctx.moveTo(parentRect.left + parentRect.width / 2, parentRect.bottom);
-        ctx.lineTo(childRect.left + childRect.width / 2, childRect.top);
-        ctx.stroke();
-      }
-    });
-  });
-}
-
-function showInfoCard(id) {
-  const person = data[id];
-  if (!person) return;
-
-  const infoCard = document.createElement('div');
-  infoCard.classList.add('info-card');
-
-  infoCard.innerHTML = `
-    <button class="up-btn" onclick="openParents(${id})">&#8679;</button>
-    <span class="close-btn" onclick="this.parentElement.remove()">&times;</span>
-    <h2>${person.name.first} ${person.name.middle ?? ''} ${person.name.last}</h2>
-    <p><strong>Born:</strong> ${person.birth.month}/${person.birth.day}/${person.birth.year}</p>
-    ${person.death ? `<p><strong>Died:</strong> ${person.death.month}/${person.death.day}/${person.death.year}</p>` : ''}
-    <p><strong>Location:</strong> ${person.birth.city}, ${person.birth.state}, ${person.birth.country}</p>
-    <p>${person.bio.desc}</p>
-  `;
-
-  document.body.appendChild(infoCard);
-}
-
-function openParents(id) {
-  const person = data[id];
-  if (!person) return;
-
-  if (person.relations.mother) {
-    showInfoCard(person.relations.mother);
-  }
-  if (person.relations.father) {
-    showInfoCard(person.relations.father);
-  }
-}
+renderFamilyTree();
