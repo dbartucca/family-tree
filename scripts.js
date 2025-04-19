@@ -1,208 +1,221 @@
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+  const data = await fetch("data.json").then(r => r.json());
   const canvas = document.getElementById("connection-canvas");
   const nodesContainer = document.getElementById("nodes-container");
   const ctx = canvas.getContext("2d");
 
-  fetch("data.json")
-    .then((res) => res.json())
-    .then((data) => {
-      // 1) Determine generations (0 = no parents, 1 = their children, etc.)
-      const generations = assignGenerations(data);
+  // Layout constants
+  const NODE_W = 160, NODE_H = 100;
+  const H_SPACING = 200, V_SPACING = 180;
+  const TOP_OFFSET = 50;
 
-      // 2) Position each person box and record its center point
-      const positions = {};
-      const nodeWidth = 160;
-      const nodeHeight = 100;
-      const hSpacing = 200;
-      const vSpacing = 180;
-      let maxX = 0,
-        maxY = 0;
+  // 1) Assign everyone to a generation: 0 = no parents, 1 = their children, etc.
+  const generations = assignGenerations(data);
 
-      Object.keys(generations)
-        .map((g) => parseInt(g, 10))
-        .sort((a, b) => a - b)
-        .forEach((gen) => {
-          const ids = generations[gen];
-          const count = ids.length;
-          // center the generation row
-          const totalWidth = (count - 1) * hSpacing;
-          let startX = (window.innerWidth - totalWidth) / 2;
+  // 2) Compute positions per generation, centering children under parents
+  const positions = {};
+  let maxX = 0, maxY = 0;
 
-          const y = gen * vSpacing + 50;
-          ids.forEach((id, idx) => {
-            const x = startX + idx * hSpacing;
-            const person = data[id];
+  // Gen 0: spread evenly
+  const roots = generations[0] || [];
+  const rootTotalW = (roots.length - 1) * H_SPACING;
+  let startX = (window.innerWidth - rootTotalW) / 2;
+  roots.forEach((id, i) => {
+    const x = startX + i * H_SPACING;
+    const y = TOP_OFFSET;
+    positions[id] = { x, y: y + NODE_H/2 };
+    createBox(id, data[id], x, y);
+    maxX = Math.max(maxX, x + NODE_W/2);
+    maxY = Math.max(maxY, y + NODE_H);
+  });
 
-            // create and place the box
-            const box = createPersonBox(id, person);
-            box.style.left = `${x - nodeWidth / 2}px`;
-            box.style.top = `${y}px`;
-            nodesContainer.appendChild(box);
+  // Gens >0: center under parent(s)
+  Object.keys(generations)
+    .map(n => parseInt(n))
+    .filter(n => n > 0)
+    .sort((a,b) => a - b)
+    .forEach(gen => {
+      const ids = generations[gen];
+      // group children by parent‐couple or single parent
+      const groups = {};
+      ids.forEach(id => {
+        const { mother, father } = data[id].relations;
+        let key;
+        if (mother != null && father != null) {
+          // couple key
+          const [a,b] = [mother, father].sort();
+          key = `c${a}-${b}`;
+        } else if (mother != null) {
+          key = `p${mother}`;
+        } else if (father != null) {
+          key = `p${father}`;
+        } else {
+          key = `solo${id}`;
+        }
+        (groups[key] = groups[key] || []).push(parseInt(id));
+      });
 
-            // record its center for line drawing
-            positions[id] = { x: x, y: y + nodeHeight / 2 };
+      // for each sibling group, position them
+      Object.entries(groups).forEach(([key, kids]) => {
+        // determine anchor X
+        let anchorX;
+        if (key.startsWith("c")) {
+          // couple
+          const [, pair] = key.match(/^c(.+)$/);
+          const [a,b] = pair.split("-").map(Number);
+          anchorX = (positions[a].x + positions[b].x) / 2;
+        } else if (key.startsWith("p")) {
+          const pid = parseInt(key.slice(1));
+          anchorX = positions[pid].x;
+        } else {
+          anchorX = (window.innerWidth) / 2; // fallback
+        }
 
-            maxX = Math.max(maxX, x + nodeWidth / 2);
-            maxY = Math.max(maxY, y + nodeHeight);
-          });
+        // total width of this sibling cluster
+        const totalW = (kids.length - 1) * H_SPACING;
+        const sx = anchorX - totalW/2;
+        const y = gen * V_SPACING + TOP_OFFSET;
+        kids.forEach((cid, idx) => {
+          const x = sx + idx * H_SPACING;
+          positions[cid] = { x, y: y + NODE_H/2 };
+          createBox(cid, data[cid], x, y);
+          maxX = Math.max(maxX, x + NODE_W/2);
+          maxY = Math.max(maxY, y + NODE_H);
         });
-
-      // 3) Resize canvas & container
-      const fullWidth = Math.max(maxX + 50, window.innerWidth);
-      const fullHeight = Math.max(maxY + 50, window.innerHeight);
-      canvas.width = fullWidth;
-      canvas.height = fullHeight;
-      nodesContainer.style.width = `${fullWidth}px`;
-      nodesContainer.style.height = `${fullHeight}px`;
-
-      // 4) Draw all relationship lines
-      drawLines(data, positions, ctx);
+      });
     });
 
-  // ——— Helpers below ———
+  // 3) Resize canvas & container
+  const fullW = Math.max(maxX + 50, window.innerWidth);
+  const fullH = Math.max(maxY + 50, window.innerHeight);
+  canvas.width = fullW;
+  canvas.height = fullH;
+  nodesContainer.style.width = fullW + "px";
+  nodesContainer.style.height = fullH + "px";
+
+  // 4) Draw lines
+  drawLines(data, positions, ctx);
+
+  // — Helpers —
 
   function assignGenerations(data) {
     const gens = {};
     const visited = new Set();
     const childrenMap = {};
 
-    // build a map: parentId → [childId, …]
-    for (const id in data) {
+    // build map: parentId → [childId,...]
+    Object.keys(data).forEach(id => {
       const rel = data[id].relations || {};
-      ["mother", "father"].forEach((role) => {
-        const pid = rel[role];
-        if (pid != null) {
-          childrenMap[pid] = childrenMap[pid] || [];
-          childrenMap[pid].push(id);
+      ["mother","father"].forEach(r => {
+        if (rel[r] != null) {
+          (childrenMap[rel[r]] = childrenMap[rel[r]]||[]).push(parseInt(id));
         }
       });
-    }
+    });
 
     function dfs(id, gen) {
       if (visited.has(id)) return;
       visited.add(id);
-      gens[gen] = gens[gen] || [];
-      gens[gen].push(id);
-
-      // children go one level down
-      (childrenMap[id] || []).forEach((cid) => dfs(cid, gen + 1));
-
-      // spouse stays on same level
-      const spouse = data[id].relations?.spouse;
-      if (spouse != null) dfs(spouse, gen);
+      (gens[gen] = gens[gen]||[]).push(id);
+      (childrenMap[id]||[]).forEach(cid => dfs(cid, gen+1));
+      const sp = data[id].relations?.spouse;
+      if (sp != null) dfs(sp, gen);
     }
 
-    // start at all people with no parents
-    Object.keys(data).forEach((id) => {
-      const rel = data[id].relations || {};
-      if (rel.mother == null && rel.father == null) {
-        dfs(id, 0);
-      }
+    // start with no-parents
+    Object.keys(data).forEach(id => {
+      const rel = data[id].relations||{};
+      if (rel.mother==null && rel.father==null) dfs(parseInt(id),0);
     });
 
     return gens;
   }
 
-  function createPersonBox(id, person) {
+  function createBox(id, person, centerX, topY) {
     const div = document.createElement("div");
     div.className = "person";
-    div.id = `person-${id}`;
+    div.style.left = (centerX - NODE_W/2) + "px";
+    div.style.top = topY + "px";
+    div.id = "person-"+id;
 
-    // try PNG, then JFIF
+    // image if exists
     const img = new Image();
     img.src = `images/${id}.png`;
     img.onload = () => div.prepend(img);
     img.onerror = () => {
-      const imgJFIF = new Image();
-      imgJFIF.src = `images/${id}.jfif`;
-      imgJFIF.onload = () => div.prepend(imgJFIF);
+      const j = new Image();
+      j.src = `images/${id}.jfif`;
+      j.onload = ()=> div.prepend(j);
     };
-    img.alt = `${person.name.first} ${person.name.last}`;
+    img.alt = person.name.first;
 
-    // name line
-    const fullName = `${person.name.first} ${person.name.middle || ""} ${person.name.last}`
-      .replace(/\s+/g, " ")
-      .trim();
-    const nameEl = document.createElement("div");
-    nameEl.innerHTML = `<strong>${fullName}</strong>`;
-    div.appendChild(nameEl);
+    // name
+    const full = [person.name.first, person.name.middle, person.name.last]
+      .filter(s=>s).join(" ");
+    const nm = document.createElement("div");
+    nm.innerHTML = `<strong>${full}</strong>`;
+    div.appendChild(nm);
 
-    return div;
+    document.getElementById("nodes-container").appendChild(div);
   }
 
-  function drawLines(data, positions, ctx) {
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    const drawnCouples = new Set();
+  function drawLines(data, pos, ctx) {
+    ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
+    const couplesDone = new Set();
 
-    Object.entries(data).forEach(([id, person]) => {
-      const from = positions[id];
-      if (!from) return;
+    Object.entries(data).forEach(([id, p])=> {
+      const from = pos[id]; if (!from) return;
+      const sp = p.relations?.spouse;
 
-      const spouseId = person.relations?.spouse;
-      // — Spouse line & shared child branch —
-      if (spouseId != null && positions[spouseId]) {
-        const key = [id, spouseId].sort().join("-");
-        if (!drawnCouples.has(key)) {
-          drawnCouples.add(key);
-          const to = positions[spouseId];
-
-          // 1) dashed green between spouses
+      // spouse line & shared child branch
+      if (sp != null && pos[sp]) {
+        const key = [id,sp].sort().join("-");
+        if (!couplesDone.has(key)) {
+          couplesDone.add(key);
+          const to = pos[sp];
+          // dashed green
           ctx.beginPath();
-          ctx.moveTo(from.x, from.y);
-          ctx.lineTo(to.x, to.y);
-          ctx.strokeStyle = "green";
-          ctx.lineWidth = 1.5;
-          ctx.setLineDash([5, 3]);
-          ctx.stroke();
+          ctx.moveTo(from.x,from.y);
+          ctx.lineTo(to.x,to.y);
+          ctx.strokeStyle="green"; ctx.lineWidth=1.5;
+          ctx.setLineDash([5,3]); ctx.stroke();
           ctx.setLineDash([]);
 
-          // 2) midpoint
-          const midX = (from.x + to.x) / 2;
-          const midY = (from.y + to.y) / 2;
+          // midpoint
+          const midX=(from.x+to.x)/2, midY=(from.y+to.y)/2;
 
-          // 3) find children of this couple
-          const children = Object.entries(data).filter(([cid, c]) => {
-            const m = c.relations?.mother;
-            const f = c.relations?.father;
-            return (
-              (m == id && f == spouseId) ||
-              (f == id && m == spouseId)
-            );
-          });
+          // collect children
+          const kids = Object.entries(data)
+            .filter(([cid,c])=>{
+              const m=c.relations?.mother, f=c.relations?.father;
+              return (m==id&&f==sp)||(f==id&&m==sp);
+            }).map(([cid])=>parseInt(cid));
 
-          if (children.length) {
-            // get positions
-            const pts = children
-              .map(([cid]) => positions[cid])
-              .filter((p) => p);
+          if (kids.length) {
+            const pts = kids.map(cid=>pos[cid]).filter(Boolean);
             if (pts.length) {
-              const childYs = pts.map((p) => p.y);
-              const childXs = pts.map((p) => p.x);
-              const childY = Math.min(...childYs);
-              const minX = Math.min(...childXs),
-                maxX = Math.max(...childXs);
+              const childY = Math.min(...pts.map(p=>p.y));
+              const xs = pts.map(p=>p.x);
+              const minX=Math.min(...xs), maxX=Math.max(...xs);
 
-              // 4) vertical down to just above kids
+              // vertical from mid to horizontal
               ctx.beginPath();
-              ctx.moveTo(midX, midY);
-              ctx.lineTo(midX, childY - 40);
-              ctx.strokeStyle = "#444";
-              ctx.lineWidth = 1.5;
+              ctx.moveTo(midX,midY);
+              ctx.lineTo(midX,childY-40);
+              ctx.strokeStyle="#444"; ctx.lineWidth=1.5; ctx.stroke();
+
+              // horizontal
+              ctx.beginPath();
+              ctx.moveTo(minX, childY-40);
+              ctx.lineTo(maxX, childY-40);
               ctx.stroke();
 
-              // 5) horizontal across kids
-              ctx.beginPath();
-              ctx.moveTo(minX, childY - 40);
-              ctx.lineTo(maxX, childY - 40);
-              ctx.stroke();
-
-              // 6) drop to each child
-              children.forEach(([cid]) => {
-                const cpos = positions[cid];
-                if (!cpos) return;
+              // drops
+              kids.forEach(cid=>{
+                const cpos=pos[cid];
                 ctx.beginPath();
-                ctx.moveTo(cpos.x, childY - 40);
-                ctx.lineTo(cpos.x, cpos.y);
+                ctx.moveTo(cpos.x,childY-40);
+                ctx.lineTo(cpos.x,cpos.y);
                 ctx.stroke();
               });
             }
@@ -210,19 +223,16 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
 
-      // — Solo parent to child (if no spouse) —
-      if (spouseId == null) {
-        Object.entries(data).forEach(([cid, c]) => {
-          const m = c.relations?.mother,
-            f = c.relations?.father;
-          if ((m == id || f == id) && positions[cid]) {
-            const to = positions[cid];
+      // solo parent → child
+      if (sp==null) {
+        Object.entries(data).forEach(([cid,c])=>{
+          const m=c.relations?.mother, f=c.relations?.father;
+          if ((m==id||f==id) && pos[cid]) {
+            const to = pos[cid];
             ctx.beginPath();
-            ctx.moveTo(from.x, from.y);
-            ctx.lineTo(to.x, to.y);
-            ctx.strokeStyle = "#444";
-            ctx.lineWidth = 1.5;
-            ctx.stroke();
+            ctx.moveTo(from.x,from.y);
+            ctx.lineTo(to.x,to.y);
+            ctx.strokeStyle="#444"; ctx.lineWidth=1.5; ctx.stroke();
           }
         });
       }
