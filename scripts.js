@@ -31,6 +31,20 @@ function assignGenerations(data) {
   const levels = {};
   const visited = new Set();
 
+  // Build a child → parent map for top-down traversal
+  const childrenMap = {};
+  for (const id in data) {
+    const { relations } = data[id];
+    if (relations?.mother) {
+      childrenMap[relations.mother] = childrenMap[relations.mother] || [];
+      childrenMap[relations.mother].push(id);
+    }
+    if (relations?.father) {
+      childrenMap[relations.father] = childrenMap[relations.father] || [];
+      childrenMap[relations.father].push(id);
+    }
+  }
+
   function dfs(id, generation) {
     if (visited.has(id)) return;
     visited.add(id);
@@ -39,15 +53,22 @@ function assignGenerations(data) {
     if (!gens[generation]) gens[generation] = [];
     gens[generation].push(id);
 
-    const person = data[id];
-    if (person.relations?.mother) dfs(person.relations.mother, generation - 1);
-    if (person.relations?.father) dfs(person.relations.father, generation - 1);
-    if (person.relations?.spouse) dfs(person.relations.spouse, generation);
+    const children = childrenMap[id] || [];
+    children.forEach(childId => dfs(childId, generation + 1));
+
+    const spouseId = data[id].relations?.spouse;
+    if (spouseId && !visited.has(spouseId)) {
+      // Keep spouse on same generation
+      dfs(spouseId, generation);
+    }
   }
 
-  // Start DFS from every person to ensure complete coverage
+  // Start from people with no parents (roots)
   Object.keys(data).forEach(id => {
-    if (!visited.has(id)) dfs(id, 0);
+    const person = data[id];
+    if (!person.relations?.mother && !person.relations?.father) {
+      dfs(id, 0);
+    }
   });
 
   return gens;
