@@ -95,7 +95,57 @@
       "children": []
     },
     "bio": {
-      "desc": "Bio of John",
+      "desc": "Bio of Brendan",
+      "gender": "M"
+    }
+  },
+  "5": {
+    "name": {
+      "first": "Michael",
+      "middle":"Patrick",
+      "last": "Reynolds"
+    },
+    "birth": {
+      "year": 1943,
+      "month": 9,
+      "day": 23,
+      "city": "Drumod",
+      "state": "Lietrim",
+      "country": "IE"
+    },
+    "relations": {
+      "mother": null,
+      "father": null,
+      "spouse": 6,
+      "children": [2]
+    },
+    "bio": {
+      "desc": "Bio of Papa",
+      "gender": "M"
+    }
+  },
+  "6": {
+    "name": {
+      "first": "Maureen",
+      "middle":"Theresa",
+      "last": "Smith"
+    },
+    "birth": {
+      "year": 1947,
+      "month": 10,
+      "day": 12,
+      "city": "Brighton",
+      "state": "Massachusetts",
+      "country": "US"
+    },
+    "relations": {
+      "mother": null,
+      "father": null,
+      "spouse": 5,
+      "children": [2]
+    },
+    "bio": {
+      "desc": "Bio of Nana",
       "gender": "M"
     }
   }
