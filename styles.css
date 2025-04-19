@@ -6,10 +6,11 @@ body {
   align-items: center;
   height: 100vh;
   background-color: #f4f4f4;
+  overflow: hidden; /* Ensure no overflow outside the body */
 }
 
 #tree-container {
-  position: relative;
+  position: relative; /* Ensure all children are positioned relative to this container */
   width: 100%;
   height: 100%;
 }
@@ -21,6 +22,7 @@ body {
   padding: 10px;
   text-align: center;
   cursor: pointer;
+  position: absolute; /* Absolute positioning inside container */
 }
 
 .info-card {
