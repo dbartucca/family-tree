@@ -1,6 +1,6 @@
 // scripts.js
 
-const canvas = document.getElementById('tree');
+const canvas = document.getElementById('tree-canvas');
 const ctx = canvas.getContext('2d');
 canvas.width = 5000;
 canvas.height = 5000;
