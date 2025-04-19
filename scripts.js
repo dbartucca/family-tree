@@ -1,110 +1,123 @@
-// Fetch and build
+const container = document.getElementById('family-tree-container');
+let treeData = {};
+let maxY = 0;
+
 fetch('data.json')
-  .then(r => r.json())
+  .then(response => response.json())
   .then(data => {
-    const container = document.getElementById('family-tree');
+    treeData = data;
+    renderTree();
+  });
 
-    // Function to create a person's block
-    function createPerson(id, info, x, y) {
-      const d = document.createElement('div');
-      d.className = 'person';
-      d.style.left = `${x}px`;
-      d.style.top = `${y}px`;
+function createPerson(id, x, y) {
+  const member = treeData[id];
+  if (!member) return;
 
-      // Optional image
-      const img = new Image();
-      img.src = `images/${id}.jfif`;
-      img.onload = () => d.prepend(img);
-      img.onerror = () => {
-        const imgPng = new Image();
-        imgPng.src = `images/${id}.png`;
-        imgPng.onload = () => d.prepend(imgPng);
-      };
+  const card = document.createElement('div');
+  card.className = 'person';
+  card.style.left = `${x}px`;
+  card.style.top = `${y}px`;
 
-      // Name
-      const name = document.createElement('p');
-      name.textContent = `${info.name.first} ${info.name.last}`;
-      d.append(name);
+  if (y > maxY) maxY = y;
 
-      // Birth
-      const b = info.birth;
-      const birth = document.createElement('p');
-      birth.textContent = `Born: ${b.month}/${b.day}/${b.year}`;
-      d.append(birth);
+  const fullName = `${member.name.first} ${member.name.middle || ''} ${member.name.last}`;
+  const birthDate = `${member.birth.month}/${member.birth.day}/${member.birth.year}`;
+  const deathYear = member.death?.year ? ` - ${member.death.year}` : '';
 
-      // Bio
-      const bio = document.createElement('p');
-      bio.textContent = info.bio.desc;
-      d.append(bio);
+  let imagePath = `images/${id}.png`;
+  const jfifPath = `images/${id}.jfif`;
 
-      container.append(d);
-      return d;
-    }
+  const img = new Image();
+  img.onload = () => {
+    card.innerHTML = `
+      <img src="${imagePath}" alt="${fullName}">
+      <h4>${fullName}</h4>
+      <p>${birthDate}${deathYear}</p>
+    `;
+  };
+  img.onerror = () => {
+    const fallbackImg = new Image();
+    fallbackImg.onload = () => {
+      card.innerHTML = `
+        <img src="${jfifPath}" alt="${fullName}">
+        <h4>${fullName}</h4>
+        <p>${birthDate}${deathYear}</p>
+      `;
+    };
+    fallbackImg.onerror = () => {
+      card.innerHTML = `
+        <h4>${fullName}</h4>
+        <p>${birthDate}${deathYear}</p>
+      `;
+    };
+    fallbackImg.src = jfifPath;
+  };
+  img.src = imagePath;
 
-    // Create relationship lines
-    function drawLine(x1, y1, x2, y2, type) {
-      const line = document.createElement('div');
-      line.classList.add('line');
-      line.classList.add(type);
-      if (type === 'line-parent-child') {
-        line.style.left = `${x1 + 60}px`; // Center of parent box
-        line.style.top = `${y1 + 100}px`; // Just below the parent box
-        line.style.width = `${Math.abs(x2 - x1) - 60}px`;
-      } else if (type === 'line-spouse') {
-        line.style.left = `${x1 + 80}px`; // Adjust for spouse distance
-        line.style.top = `${y1 + 45}px`; // Center of the spouse boxes
-        line.style.width = `${Math.abs(x2 - x1)}px`;
-      }
-      container.appendChild(line);
-    }
+  container.appendChild(card);
+}
 
-    // Create parent-child relationships (horizontal)
-    function createParentChildBranch(parentId, parent, childrenIds, startX, startY) {
-      const parentBox = createPerson(parentId, parent, startX, startY);
-      let nextX = startX;
-      const childBoxes = [];
-      childrenIds.forEach((childId, index) => {
-        const child = data[childId];
-        const childBox = createPerson(childId, child, nextX, startY + 200); // Space children below the parent
-        childBoxes.push(childBox);
-        nextX += 180; // Increase spacing for the next child
-        drawLine(startX + 60, startY + 100, nextX - 60, startY + 200, 'line-parent-child'); // Parent to child line
-      });
+function drawLine(x1, y1, x2, y2) {
+  const line = document.createElement('div');
+  line.className = 'line';
 
-      return { parentBox, childBoxes };
-    }
+  const deltaX = x2 - x1;
+  const deltaY = y2 - y1;
+  const length = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
 
-    // Create spouse relationships (side by side)
-    function createSpouseBranch(personId, person, startX, startY) {
-      const spouseBox = createPerson(personId, person, startX, startY);
-      if (person.relations.spouse) {
-        const spouseId = person.relations.spouse;
-        const spouse = data[spouseId];
-        const spouseBox2 = createPerson(spouseId, spouse, startX + 180, startY); // Place spouse next to the person
-        drawLine(startX + 60, startY + 100, startX + 180 + 60, startY + 100, 'line-spouse'); // Spouse line
-        return { personBox: spouseBox, spouseBox: spouseBox2 };
-      }
-      return { personBox: spouseBox };
-    }
+  line.style.width = `${length}px`;
+  line.style.left = `${x1}px`;
+  line.style.top = `${y1}px`;
 
-    // Build family tree
-    let xOffset = 0;
-    Object.keys(data).forEach(id => {
-      const person = data[id];
-      const rel = person.relations;
+  const angle = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
+  line.style.transform = `rotate(${angle}deg)`;
 
-      // Only render top-level blocks (parents have children, or spouse has no parent)
-      if (rel.mother || rel.father) return;
+  container.appendChild(line);
+}
 
-      // Handle parents and children
-      if (rel.children?.length) {
-        const { parentBox, childBoxes } = createParentChildBranch(id, person, rel.children, xOffset, 0);
-        xOffset += 180 * (childBoxes.length + 1); // Add space for next set of children
-      } else {
-        const { personBox, spouseBox } = createSpouseBranch(id, person, xOffset, 0);
-        xOffset += 180 * 2; // Account for both spouse and person
-      }
+function renderTree() {
+  const positions = {};
+
+  const rootId = 1;
+  const boxWidth = 180;
+  const boxHeight = 160;
+  const hSpacing = 100;
+  const vSpacing = 200;
+
+  function positionPerson(id, depth, xOffset) {
+    const x = xOffset;
+    const y = depth * (boxHeight + vSpacing);
+    positions[id] = { x, y };
+    createPerson(id, x, y);
+
+    const member = treeData[id];
+    if (!member) return;
+
+    const children = Object.entries(treeData)
+      .filter(([_, m]) => m.relations?.mother === id || m.relations?.father === id)
+      .map(([cid]) => parseInt(cid));
+
+    let childX = x - (children.length - 1) * (boxWidth + hSpacing) / 2;
+
+    children.forEach(childId => {
+      positionPerson(childId, depth + 1, childX);
+      const childPos = positions[childId];
+      drawLine(x + boxWidth / 2, y + boxHeight, childPos.x + boxWidth / 2, childPos.y);
+      childX += boxWidth + hSpacing;
     });
 
-  })
-  .catch(console.error);
+    const spouseId = member.relations?.spouse;
+    if (spouseId && !positions[spouseId]) {
+      const spouseX = x + boxWidth + hSpacing / 2;
+      const spouseY = y;
+      positions[spouseId] = { x: spouseX, y: spouseY };
+      createPerson(spouseId, spouseX, spouseY);
+      drawLine(x + boxWidth, y + boxHeight / 2, spouseX, spouseY + boxHeight / 2);
+    }
+  }
+
+  positionPerson(rootId, 0, window.innerWidth / 2 - boxWidth / 2);
+
+  // Dynamically set the container height based on max Y position
+  container.style.height = (maxY + boxHeight + 100) + 'px';
+}
