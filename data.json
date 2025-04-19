@@ -212,7 +212,12 @@
     },
     "bio": {
       "desc": "Bio of Paw Paw",
-      "gender": "M"
+      "gender": "M",
+      "military":{
+        "branch":"Army",
+        "affiliation":"US",
+        "wars":["Korea"]
+      }
     }
   },
   9: {
