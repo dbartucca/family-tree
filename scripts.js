@@ -115,6 +115,7 @@ function drawLines(data, positions) {
     const spouseId = person.relations?.spouse;
     const coupleKey = [id, spouseId].sort().join('-');
 
+    // 💍 SPOUSE LINE
     if (spouseId && positions[spouseId] && !drawnCouples.has(coupleKey)) {
       const spousePos = positions[spouseId];
 
@@ -133,26 +134,27 @@ function drawLines(data, positions) {
       const midX = (from.x + spousePos.x) / 2;
       const midY = (from.y + spousePos.y) / 2;
 
-      // 3. Collect all children of this couple
-      const children = Object.entries(data)
-        .filter(([cid, c]) => {
-          const m = c.relations?.mother;
-          const f = c.relations?.father;
-          return [m, f].includes(id) && [m, f].includes(spouseId);
-        });
+      // 3. Find children shared by this couple
+      const children = Object.entries(data).filter(([cid, child]) => {
+        const m = child.relations?.mother?.toString();
+        const f = child.relations?.father?.toString();
+        return (
+          [m, f].includes(id) && [m, f].includes(spouseId)
+        );
+      });
 
-      if (children.length) {
-        // 4. Draw vertical line from midpoint to child level
-        const childY = positions[children[0][0]].y; // assume same Y for all kids
+      if (children.length > 0) {
+        // 4. Vertical line down from midpoint to child level
+        const childY = Math.min(...children.map(([cid]) => positions[cid]?.y || 0));
         ctx.beginPath();
         ctx.moveTo(midX, midY);
-        ctx.lineTo(midX, childY - 40); // above children
+        ctx.lineTo(midX, childY - 40);
         ctx.strokeStyle = '#444';
         ctx.lineWidth = 1.5;
         ctx.stroke();
 
-        // 5. Horizontal line connecting children
-        const childXs = children.map(([cid]) => positions[cid].x);
+        // 5. Horizontal line connecting all children
+        const childXs = children.map(([cid]) => positions[cid]?.x || 0);
         const minX = Math.min(...childXs);
         const maxX = Math.max(...childXs);
         ctx.beginPath();
@@ -160,9 +162,10 @@ function drawLines(data, positions) {
         ctx.lineTo(maxX, childY - 40);
         ctx.stroke();
 
-        // 6. Line from horizontal line down to each child
+        // 6. Vertical lines down to each child
         children.forEach(([cid]) => {
           const cpos = positions[cid];
+          if (!cpos) return;
           ctx.beginPath();
           ctx.moveTo(cpos.x, childY - 40);
           ctx.lineTo(cpos.x, cpos.y);
@@ -171,11 +174,12 @@ function drawLines(data, positions) {
       }
     }
 
-    // If no spouse, draw direct parent→child line(s)
+    // 👤 If no spouse, just connect solo parent to child directly
     if (!spouseId) {
       Object.entries(data).forEach(([cid, child]) => {
-        const isParent = child.relations?.mother === id || child.relations?.father === id;
-        if (isParent && positions[cid]) {
+        const m = child.relations?.mother?.toString();
+        const f = child.relations?.father?.toString();
+        if ((m === id || f === id) && positions[cid]) {
           const to = positions[cid];
           ctx.beginPath();
           ctx.moveTo(from.x, from.y);
