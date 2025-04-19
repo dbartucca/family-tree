@@ -28,12 +28,14 @@ function createPersonBox(id, person) {
 
 function assignGenerations(data) {
   const gens = {};
+  const levels = {};
   const visited = new Set();
 
   function dfs(id, generation) {
     if (visited.has(id)) return;
     visited.add(id);
 
+    levels[id] = generation;
     if (!gens[generation]) gens[generation] = [];
     gens[generation].push(id);
 
@@ -43,10 +45,9 @@ function assignGenerations(data) {
     if (person.relations?.spouse) dfs(person.relations.spouse, generation);
   }
 
-  // Start from people with no parents
+  // Start DFS from every person to ensure complete coverage
   Object.keys(data).forEach(id => {
-    const p = data[id];
-    if (!p.relations?.mother && !p.relations?.father) dfs(id, 0);
+    if (!visited.has(id)) dfs(id, 0);
   });
 
   return gens;
