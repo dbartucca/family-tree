@@ -6,14 +6,13 @@ fetch('data.json')
     data = fetchedData;
     generations = getGenerations(data);
     renderTree(data, generations);
-    // Initial drawing of connections
-    requestAnimationFrame(() => drawConnections(data, generations));
+    // Draw the connections initially
+    drawConnections();
   });
 
 // Resize listener to update lines dynamically
 window.addEventListener('resize', () => {
-  // Use requestAnimationFrame to ensure proper redrawing
-  requestAnimationFrame(() => drawConnections(data, generations));
+  drawConnections(); // Redraw connections on resize
 });
 
 function getGenerations(data) {
@@ -59,46 +58,45 @@ function renderTree(data, generations) {
 
     container.appendChild(row);
   });
-
-  // Ensure to re-trigger line drawing after rendering people
-  requestAnimationFrame(() => drawConnections(data, generations));
 }
 
-function drawConnections(data, generations) {
+function drawConnections() {
   const svg = document.getElementById('connections');
 
-  // Clear existing connections before drawing new ones
+  // Clear existing connections before redrawing
   while (svg.firstChild) {
     svg.removeChild(svg.firstChild);
   }
 
-  // Redraw connections after elements are rendered
-  setTimeout(() => {
-    for (const [id, person] of Object.entries(data)) {
-      const from = document.getElementById(`person-${id}`);
+  // Draw lines for all relationships
+  Object.entries(data).forEach(([id, person]) => {
+    const from = document.getElementById(`person-${id}`);
 
-      if (person.relations.spouse) {
-        const to = document.getElementById(`person-${person.relations.spouse}`);
-        if (to) drawLine(from, to, svg, 'red');
-      }
-
-      person.relations.children.forEach(childId => {
-        const to = document.getElementById(`person-${childId}`);
-        if (to) drawLine(from, to, svg, 'blue');
-      });
+    // Spouse line
+    if (person.relations.spouse) {
+      const to = document.getElementById(`person-${person.relations.spouse}`);
+      if (to) drawLine(from, to, svg, 'red'); // Red for spouses
     }
-  }, 0); // Ensures drawing happens after layout is complete
+
+    // Child lines
+    person.relations.children.forEach(childId => {
+      const to = document.getElementById(`person-${childId}`);
+      if (to) drawLine(from, to, svg, 'blue'); // Blue for parent-child
+    });
+  });
 }
 
 function drawLine(from, to, svg, color) {
   const fromRect = from.getBoundingClientRect();
   const toRect = to.getBoundingClientRect();
-  
+
+  // Calculate the mid-points of both elements
   const x1 = fromRect.left + fromRect.width / 2;
   const y1 = fromRect.top + fromRect.height / 2;
   const x2 = toRect.left + toRect.width / 2;
   const y2 = toRect.top + toRect.height / 2;
 
+  // Create a new line in the SVG
   const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
   line.setAttribute('x1', x1);
   line.setAttribute('y1', y1);
