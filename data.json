@@ -39,8 +39,8 @@
       "country": "US"
     },
     "relations": {
-      "mother": null,
-      "father": null,
+      "mother": 6,
+      "father": 5,
       "spouse": 3,
       "children": [1,4]
     },
@@ -64,8 +64,8 @@
       "country": "US"
     },
     "relations": {
-      "mother": null,
-      "father": null,
+      "mother": 7,
+      "father": 8,
       "spouse": 2,
       "children": [1,4]
     },
