@@ -6,12 +6,14 @@ fetch('data.json')
     data = fetchedData;
     generations = getGenerations(data);
     renderTree(data, generations);
-    drawConnections(data, generations);
+    // Draw connections after the page is fully loaded
+    requestAnimationFrame(() => drawConnections(data, generations));
   });
 
 // Resize listener to update lines dynamically
 window.addEventListener('resize', () => {
-  drawConnections(data, generations);  // Redraw lines on resize
+  // Use requestAnimationFrame to ensure proper redrawing
+  requestAnimationFrame(() => drawConnections(data, generations));
 });
 
 function getGenerations(data) {
@@ -67,19 +69,22 @@ function drawConnections(data, generations) {
     svg.removeChild(svg.firstChild);
   }
 
-  for (const [id, person] of Object.entries(data)) {
-    const from = document.getElementById(`person-${id}`);
-
-    if (person.relations.spouse) {
-      const to = document.getElementById(`person-${person.relations.spouse}`);
-      if (to) drawLine(from, to, svg, 'red');
+  // Ensure we calculate positions once the DOM is fully laid out
+  setTimeout(() => {
+    for (const [id, person] of Object.entries(data)) {
+      const from = document.getElementById(`person-${id}`);
+  
+      if (person.relations.spouse) {
+        const to = document.getElementById(`person-${person.relations.spouse}`);
+        if (to) drawLine(from, to, svg, 'red');
+      }
+  
+      person.relations.children.forEach(childId => {
+        const to = document.getElementById(`person-${childId}`);
+        if (to) drawLine(from, to, svg, 'blue');
+      });
     }
-
-    person.relations.children.forEach(childId => {
-      const to = document.getElementById(`person-${childId}`);
-      if (to) drawLine(from, to, svg, 'blue');
-    });
-  }
+  }, 0); // Delay execution to let layout settle
 }
 
 function drawLine(from, to, svg, color) {
