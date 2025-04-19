@@ -1,132 +1,90 @@
-let data;
+let data = {};
+const nodeMap = {};
 
 fetch('data.json')
   .then(res => res.json())
   .then(json => {
     data = json;
-    renderTree(data);
-    drawConnections();
-    window.addEventListener("resize", () => {
-      drawConnections();
-    });
+    renderTree();
+    window.addEventListener('resize', drawLines);
   });
 
-function getGenerations(data) {
-  const generations = {};
-  const visited = new Set();
-
-  function dfs(id, level) {
-    if (!generations[level]) generations[level] = [];
-    if (visited.has(id)) return;
-    visited.add(id);
-    generations[level].push(id);
-
-    const person = data[id];
-    if (person.relations.children) {
-      person.relations.children.forEach(childId => {
-        dfs(childId, level + 1);
-      });
-    }
-  }
-
-  // Start from root(s)
-  Object.keys(data).forEach(id => {
-    const person = data[id];
-    if (!person.relations.father && !person.relations.mother) {
-      dfs(id, 0);
-    }
-  });
-
-  return generations;
-}
-
-function renderTree(data) {
-  const container = document.getElementById("tree-container");
-  container.innerHTML = "";
-  const generations = getGenerations(data);
-
-  Object.keys(generations).forEach(level => {
-    const genDiv = document.createElement("div");
-    genDiv.className = "generation";
-    genDiv.dataset.generation = level;
-
-    generations[level].forEach(id => {
-      const person = data[id];
-      const box = document.createElement("div");
-      box.className = "person";
-      box.id = `person-${id}`;
-      box.innerText = `${person.name.first} ${person.name.last}`;
-      box.addEventListener("click", () => showInfoCard(person));
-      genDiv.appendChild(box);
-    });
-
-    container.appendChild(genDiv);
-  });
-}
-
-function drawConnections() {
-  const svg = document.getElementById("connection-lines");
-  svg.innerHTML = "";
+function renderTree() {
+  const container = document.getElementById('tree-container');
+  container.innerHTML = '';
 
   Object.entries(data).forEach(([id, person]) => {
-    const childEl = document.getElementById(`person-${id}`);
+    const div = document.createElement('div');
+    div.className = 'person';
+    div.textContent = `${person.name.first} ${person.name.last}`;
+    div.id = `person-${id}`;
+    div.onclick = () => showInfoCard(id);
+    container.appendChild(div);
+    nodeMap[id] = div;
+  });
+
+  drawLines();
+}
+
+function drawLines() {
+  const canvas = document.getElementById('lines');
+  const container = document.getElementById('tree-container');
+  const rect = container.getBoundingClientRect();
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.strokeStyle = '#333';
+  ctx.lineWidth = 2;
+
+  Object.entries(data).forEach(([id, person]) => {
+    const childEl = nodeMap[id];
     if (!childEl) return;
+    const childRect = childEl.getBoundingClientRect();
 
-    const parents = [person.relations.father, person.relations.mother].filter(Boolean);
-    parents.forEach(parentId => {
-      const parentEl = document.getElementById(`person-${parentId}`);
-      if (!parentEl) return;
+    ['mother', 'father'].forEach(role => {
+      const parentId = person.relations[role];
+      if (parentId && nodeMap[parentId]) {
+        const parentEl = nodeMap[parentId];
+        const parentRect = parentEl.getBoundingClientRect();
 
-      const parentRect = parentEl.getBoundingClientRect();
-      const childRect = childEl.getBoundingClientRect();
-
-      const svgRect = svg.getBoundingClientRect();
-      const x1 = parentRect.left + parentRect.width / 2 - svgRect.left;
-      const y1 = parentRect.bottom - svgRect.top;
-      const x2 = childRect.left + childRect.width / 2 - svgRect.left;
-      const y2 = childRect.top - svgRect.top;
-
-      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-      line.setAttribute("x1", x1);
-      line.setAttribute("y1", y1);
-      line.setAttribute("x2", x2);
-      line.setAttribute("y2", y2);
-      line.setAttribute("stroke", "#000");
-      line.setAttribute("stroke-width", "2");
-      svg.appendChild(line);
+        ctx.beginPath();
+        ctx.moveTo(parentRect.left + parentRect.width / 2, parentRect.bottom - rect.top);
+        ctx.lineTo(childRect.left + childRect.width / 2, childRect.top - rect.top);
+        ctx.stroke();
+      }
     });
   });
 }
 
-// Info card logic
-function showInfoCard(member) {
-  const card = document.getElementById("info-card");
-  const nameEl = document.getElementById("info-name");
-  const birthEl = document.getElementById("info-birth");
-  const deathEl = document.getElementById("info-death");
-  const bioEl = document.getElementById("info-bio");
+function showInfoCard(id) {
+  const person = data[id];
+  if (!person) return;
 
-  const fullName = `${member.name.first} ${member.name.middle ?? ""} ${member.name.last}`;
-  nameEl.textContent = fullName;
+  const infoCard = document.createElement('div');
+  infoCard.classList.add('info-card');
 
-  birthEl.textContent = `Born: ${member.birth.month}/${member.birth.day}/${member.birth.year}`;
-  deathEl.textContent = member.death
-    ? `Died: ${member.death.month}/${member.death.day}/${member.death.year}`
-    : "";
+  infoCard.innerHTML = `
+    <button class="up-btn" onclick="openParents(${id})">&#8679;</button>
+    <span class="close-btn" onclick="this.parentElement.remove()">&times;</span>
+    <h2>${person.name.first} ${person.name.middle ?? ''} ${person.name.last}</h2>
+    <p><strong>Born:</strong> ${person.birth.month}/${person.birth.day}/${person.birth.year}</p>
+    ${person.death ? `<p><strong>Died:</strong> ${person.death.month}/${person.death.day}/${person.death.year}</p>` : ''}
+    <p><strong>Location:</strong> ${person.birth.city}, ${person.birth.state}, ${person.birth.country}</p>
+    <p>${person.bio.desc}</p>
+  `;
 
-  bioEl.textContent = member.bio.desc;
-
-  card.classList.remove("hidden");
+  document.body.appendChild(infoCard);
 }
 
-function hideInfoCard() {
-  document.getElementById("info-card").classList.add("hidden");
-}
+function openParents(id) {
+  const person = data[id];
+  if (!person) return;
 
-document.querySelector(".close-btn").addEventListener("click", hideInfoCard);
-window.addEventListener("click", (e) => {
-  const card = document.getElementById("info-card");
-  if (!card.contains(e.target) && !e.target.classList.contains("person")) {
-    hideInfoCard();
+  if (person.relations.mother) {
+    showInfoCard(person.relations.mother);
   }
-});
+  if (person.relations.father) {
+    showInfoCard(person.relations.father);
+  }
+}
