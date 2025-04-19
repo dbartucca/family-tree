@@ -117,7 +117,7 @@
       "mother": null,
       "father": null,
       "spouse": 6,
-      "children": [2]
+      "children": [2,9]
     },
     "bio": {
       "desc": "Bio of Papa",
@@ -142,7 +142,7 @@
       "mother": null,
       "father": null,
       "spouse": 5,
-      "children": [2]
+      "children": [2,9]
     },
     "bio": {
       "desc": "Bio of Nana",
@@ -196,6 +196,31 @@
     },
     "bio": {
       "desc": "Bio of Paw Paw",
+      "gender": "M"
+    }
+  },
+  "9": {
+    "name": {
+      "first": "Michael",
+      "middle":"Patrick",
+      "last": "Reynolds"
+    },
+    "birth": {
+      "year": 1969,
+      "month": 10,
+      "day": 15,
+      "city": "Brighton",
+      "state": "Massachusetts",
+      "country": "US"
+    },
+    "relations": {
+      "mother": 6,
+      "father": 5,
+      "spouse": null,
+      "children": []
+    },
+    "bio": {
+      "desc": "Bio of Uncle Mike",
       "gender": "M"
     }
   }
