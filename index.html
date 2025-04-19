@@ -1,13 +1,133 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Family Tree</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Family Tree</title>
+
+  <!-- Link to external CSS file -->
+  <link rel="stylesheet" href="styles.css">
+  
+  <!-- Optional: Add a favicon -->
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+
+  <!-- Optional: Include Google Fonts (if you want a specific font) -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+
 </head>
 <body>
-    <div id="family-tree"></div> <!-- Container for the family tree -->
-    <script src="scripts.js"></script>
+
+  <div id="family-tree"></div>
+
+  <!-- Optional: Add a search box or other interactive features -->
+  <input type="text" id="search" placeholder="Search for a family member" style="margin: 20px; padding: 10px; font-size: 16px;">
+
+  <!-- Optional: Add a header or description -->
+  <header style="text-align: center; margin-top: 20px;">
+    <h1>My Family Tree</h1>
+    <p>Explore the generations of our family.</p>
+  </header>
+
+  <!-- Script to fetch and build the family tree from data.json -->
+  <script>
+    // Fetch the data from the data.json file
+    fetch('data.json')
+      .then(response => response.json())
+      .then(data => {
+        const familyTreeContainer = document.getElementById('family-tree');
+
+        // Function to create a family member's block
+        function createFamilyMember(personId, person) {
+          const personDiv = document.createElement('div');
+          personDiv.classList.add('person');
+
+          // Create the image element (handle missing images)
+          const img = document.createElement('img');
+          const imageUrl = `images/${personId}.jfif`;
+          const imgCheck = new Image();
+          imgCheck.src = imageUrl;
+          imgCheck.onload = function() {
+            img.src = imageUrl;
+          };
+          imgCheck.onerror = function() {
+            // No image, leave it empty
+            img.src = '';
+          };
+          img.alt = `${person.name.first} ${person.name.last}`;
+          personDiv.appendChild(img);
+
+          // Add the person's name
+          const name = document.createElement('p');
+          name.textContent = `${person.name.first} ${person.name.last}`;
+          personDiv.appendChild(name);
+
+          // Display birth info
+          const birth = document.createElement('p');
+          birth.textContent = `Born: ${person.birth.month}/${person.birth.day}/${person.birth.year} in ${person.birth.city}, ${person.birth.state}, ${person.birth.country}`;
+          personDiv.appendChild(birth);
+
+          // Display bio
+          const bio = document.createElement('p');
+          bio.textContent = person.bio.desc;
+          personDiv.appendChild(bio);
+
+          return personDiv;
+        }
+
+        // Function to create parent-child relationships
+        function createParentChildBranch(parentId, parent, childrenIds) {
+          const parentDiv = createFamilyMember(parentId, parent);
+          const childrenDiv = document.createElement('div');
+          childrenDiv.classList.add('children');
+
+          // Create child elements
+          childrenIds.forEach(childId => {
+            const child = data[childId];
+            const childDiv = createFamilyMember(childId, child);
+            childrenDiv.appendChild(childDiv);
+          });
+
+          parentDiv.appendChild(childrenDiv);
+          return parentDiv;
+        }
+
+        // Function to create spouse relationship
+        function createSpouseBranch(personId, person) {
+          const personDiv = createFamilyMember(personId, person);
+          if (person.relations.spouse) {
+            const spouseId = person.relations.spouse;
+            const spouse = data[spouseId];
+            const spouseDiv = createFamilyMember(spouseId, spouse);
+            // Position them side by side as spouses
+            const spouseContainer = document.createElement('div');
+            spouseContainer.classList.add('spouse-container');
+            spouseContainer.appendChild(personDiv);
+            spouseContainer.appendChild(spouseDiv);
+            return spouseContainer;
+          }
+          return personDiv;
+        }
+
+        // Build the family tree for each person
+        for (const personId in data) {
+          const person = data[personId];
+          let familyMemberDiv;
+
+          // Check if the person has children and create parent-child branch
+          if (person.relations.children && person.relations.children.length > 0) {
+            familyMemberDiv = createParentChildBranch(personId, person, person.relations.children);
+          } else {
+            familyMemberDiv = createSpouseBranch(personId, person);
+          }
+
+          familyTreeContainer.appendChild(familyMemberDiv);
+        }
+      })
+      .catch(error => {
+        console.error('Error loading data:', error);
+      });
+  </script>
+
 </body>
 </html>
