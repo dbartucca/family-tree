@@ -166,6 +166,10 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@9.4.0/dist/panzoom.min.js"></script>
-  <script src="script.js"></script>
+  <script>
+    const script = document.createElement('script');
+    script.src = 'script.js';
+    document.body.appendChild(script);
+  </script>
 </body>
 </html>
