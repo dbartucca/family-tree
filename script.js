@@ -1,6 +1,7 @@
 let data = {};
 let isFiltered = false;
 let activeFilterId = null;
+let idToEl = {};
 
 async function fetchData() {
   const response = await fetch('data.json');
@@ -195,8 +196,6 @@ function assignGenerations(data) {
   return generations;
 }
 
-let idToEl = {};
-
 function drawAllLines() {
   const svg = document.querySelector("svg.lines");
   svg.innerHTML = "";
@@ -272,23 +271,4 @@ function renderTree(data) {
   }
 
   drawAllLines();
-  window.addEventListener("resize", drawAllLines);
 }
-
-window.onload = async () => {
-  await fetchData();
-  renderTree(data);
-
-  const target = document.querySelector('#panzoom-target');
-  const wrapper = document.querySelector('.tree-container');
-
-  const panzoom = Panzoom(target, {
-    maxScale: 2,
-    minScale: 0.5,
-    contain: 'outside',
-    startScale: 1
-  });
-
-  wrapper.addEventListener('wheel', panzoom.zoomWithWheel);
-  wrapper.addEventListener('pointerdown', panzoom.handlePointerDown);
-};
