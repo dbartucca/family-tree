@@ -3,163 +3,115 @@ async function fetchData() {
   return await response.json();
 }
 
-function createPersonElement(person, id) {
-  const div = document.createElement('div');
-  div.className = 'person';
-  div.id = `person-${id}`;
-  div.innerHTML = `
+function createPersonNode(person, id) {
+  const el = document.createElement('div');
+  el.className = 'person';
+  el.innerHTML = `
     <div class="photo"></div>
     <strong>${person.name.first} ${person.name.middle || ''} ${person.name.last}</strong><br>
     <small>${person.birth.year || ''}</small><br>
     <em>${person.bio.desc}</em>
   `;
-  return div;
+  el.id = `person-${id}`;
+  return el;
 }
 
-function getGenerations(data) {
-  const childToParent = {};
-  for (const [id, person] of Object.entries(data)) {
-    person.relations.children.forEach(childId => {
-      if (!childToParent[childId]) childToParent[childId] = [];
-      childToParent[childId].push(id);
-    });
-  }
+function buildFamilyTree(data) {
+  const used = new Set();
+  const tree = [];
 
-  const roots = Object.keys(data).filter(id => !(id in childToParent));
-  const generations = [];
+  function buildGen(parents) {
+    const generation = [];
 
-  function buildGen(ids, level, visited = new Set()) {
-    if (!ids.length) return;
-    generations[level] = generations[level] || [];
+    parents.forEach(([id1, id2]) => {
+      const parent1 = data[id1];
+      const parent2 = id2 ? data[id2] : null;
+      if (!parent1) return;
 
-    const nextGen = new Set();
+      const familyDiv = document.createElement('div');
+      familyDiv.className = 'family';
 
-    ids.forEach(id => {
-      if (visited.has(id)) return;
+      const parentsDiv = document.createElement('div');
+      parentsDiv.className = 'parents';
 
-      const person = data[id];
-      const spouseId = person.relations.spouse?.toString();
+      const el1 = createPersonNode(parent1, id1);
+      used.add(id1);
+      parentsDiv.appendChild(el1);
 
-      if (spouseId && data[spouseId] && !visited.has(spouseId)) {
-        generations[level].push([id, spouseId]);
-        visited.add(id);
-        visited.add(spouseId);
-      } else {
-        generations[level].push([id]);
-        visited.add(id);
+      if (parent2 && data[parent2]) {
+        const el2 = createPersonNode(data[parent2], id2);
+        parentsDiv.appendChild(el2);
+        used.add(id2);
       }
 
-      person.relations.children.forEach(childId => nextGen.add(childId.toString()));
-    });
+      familyDiv.appendChild(parentsDiv);
 
-    buildGen([...nextGen], level + 1, visited);
-  }
+      const children = parent1.relations.children || [];
+      const childrenDiv = document.createElement('div');
+      childrenDiv.className = 'children';
 
-  buildGen(roots, 0);
-  return generations;
-}
+      const nextGenParents = [];
 
-function drawLines(svg, fromEl, toEl) {
-  const fromBox = fromEl.getBoundingClientRect();
-  const toBox = toEl.getBoundingClientRect();
-  const svgBox = svg.getBoundingClientRect();
+      children.forEach(cid => {
+        if (used.has(cid)) return;
+        const child = data[cid];
+        if (!child) return;
+        const childEl = createPersonNode(child, cid);
+        childrenDiv.appendChild(childEl);
+        used.add(cid);
 
-  const x1 = fromBox.left + fromBox.width / 2 - svgBox.left;
-  const y1 = fromBox.bottom - svgBox.top;
-  const x2 = toBox.left + toBox.width / 2 - svgBox.left;
-  const y2 = toBox.top - svgBox.top;
+        const spouse = child.relations.spouse;
+        nextGenParents.push([cid.toString(), spouse ? spouse.toString() : null]);
+      });
 
-  const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-  line.setAttribute("x1", x1);
-  line.setAttribute("y1", y1);
-  line.setAttribute("x2", x2);
-  line.setAttribute("y2", y2);
-  line.setAttribute("stroke", "#333");
-  line.setAttribute("stroke-width", "2");
-  svg.appendChild(line);
-}
+      if (children.length > 0) {
+        familyDiv.appendChild(childrenDiv);
+      }
 
-function drawSpouseLine(svg, el1, el2) {
-  const box1 = el1.getBoundingClientRect();
-  const box2 = el2.getBoundingClientRect();
-  const svgBox = svg.getBoundingClientRect();
+      generation.push(familyDiv);
 
-  const y = box1.top + box1.height / 2 - svgBox.top;
-  const x1 = box1.right - svgBox.left;
-  const x2 = box2.left - svgBox.left;
-
-  const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-  line.setAttribute("x1", x1);
-  line.setAttribute("y1", y);
-  line.setAttribute("x2", x2);
-  line.setAttribute("y2", y);
-  line.setAttribute("stroke", "#666");
-  line.setAttribute("stroke-width", "2");
-  svg.appendChild(line);
-}
-
-function renderConnections(data, idToEl, svg) {
-  svg.innerHTML = '';
-
-  // Draw parent -> child lines
-  for (const [id, person] of Object.entries(data)) {
-    (person.relations.children || []).forEach(childId => {
-      if (idToEl[id] && idToEl[childId]) {
-        drawLines(svg, idToEl[id], idToEl[childId]);
+      if (nextGenParents.length > 0) {
+        const childGen = buildGen(nextGenParents);
+        if (childGen.length) {
+          tree.push(childGen);
+        }
       }
     });
+
+    return generation;
   }
 
-  // Draw spouse lines
+  // Start from top-level ancestors (those who are not children)
+  const allChildren = new Set();
+  for (const person of Object.values(data)) {
+    (person.relations.children || []).forEach(cid => allChildren.add(cid.toString()));
+  }
+
+  const rootPairs = [];
   for (const [id, person] of Object.entries(data)) {
-    const spouseId = person.relations.spouse?.toString();
-    if (
-      spouseId &&
-      data[spouseId] &&
-      id < spouseId && // Avoid drawing twice
-      idToEl[id] && idToEl[spouseId]
-    ) {
-      drawSpouseLine(svg, idToEl[id], idToEl[spouseId]);
+    const spouse = person.relations.spouse?.toString();
+    if (!allChildren.has(id)) {
+      rootPairs.push([id, spouse || null]);
     }
   }
+
+  const firstGen = buildGen(rootPairs);
+  if (firstGen.length) tree.push(firstGen);
+
+  return tree;
 }
 
 window.onload = async () => {
   const data = await fetchData();
-  const container = document.getElementById('tree');
-  const svg = container.querySelector('svg');
+  const treeContainer = document.getElementById('tree');
+  const generations = buildFamilyTree(data);
 
-  const generations = getGenerations(data);
-  const idToEl = {};
-
-  generations.forEach((group, index) => {
-    const levelDiv = document.createElement('div');
-    levelDiv.className = 'level';
-
-    group.forEach(pair => {
-      const groupDiv = document.createElement('div');
-      groupDiv.style.display = 'flex';
-      groupDiv.style.alignItems = 'center';
-      groupDiv.style.gap = '10px';
-
-      pair.forEach(id => {
-        const el = createPersonElement(data[id], id);
-        idToEl[id] = el;
-        groupDiv.appendChild(el);
-      });
-
-      levelDiv.appendChild(groupDiv);
+  generations.forEach(generation => {
+    const genDiv = document.createElement('div');
+    genDiv.className = 'generation';
+    generation.forEach(family => {
+      genDiv.appendChild(family);
     });
-
-    container.appendChild(levelDiv);
+    treeContainer.appendChild(genDiv);
   });
-
-  function updateLines() {
-    requestAnimationFrame(() => {
-      renderConnections(data, idToEl, svg);
-    });
-  }
-
-  updateLines();
-  window.addEventListener('resize', updateLines);
 };
