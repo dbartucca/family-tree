@@ -2,47 +2,50 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Family Tree Viewer</title>
+  <title>Structured Family Tree</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       margin: 0;
       background: #f4f4f4;
     }
-
-    .tree-container {
-      position: relative;
+    .tree {
       padding: 40px;
-      overflow-x: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 60px;
     }
-
+    .generation {
+      display: flex;
+      justify-content: center;
+      gap: 60px;
+      flex-wrap: wrap;
+    }
+    .family {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .parents {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .children {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
     .person {
       background: white;
       border: 1px solid #ccc;
       border-radius: 10px;
       padding: 10px;
-      margin: 10px;
       min-width: 150px;
       text-align: center;
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      display: inline-block;
     }
-
-    .level {
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      margin-bottom: 60px;
-    }
-
-    svg.connector-lines {
-      position: absolute;
-      top: 0;
-      left: 0;
-      overflow: visible;
-      z-index: 0;
-    }
-
     .person .photo {
       width: 60px;
       height: 60px;
@@ -50,14 +53,14 @@
       background: #ccc;
       margin: 0 auto 10px;
     }
+    h2 {
+      text-align: center;
+    }
   </style>
 </head>
 <body>
-  <h2 style="text-align:center;">Family Tree</h2>
-  <div class="tree-container" id="tree">
-    <svg class="connector-lines"></svg>
-  </div>
-
+  <h2>Family Tree</h2>
+  <div class="tree" id="tree"></div>
   <script src="script.js"></script>
 </body>
 </html>
