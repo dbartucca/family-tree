@@ -166,10 +166,10 @@
     </div>
   </div>
 
-  <!-- Load Panzoom FIRST -->
+  <!-- Load Panzoom -->
   <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@9.4.0/dist/panzoom.min.js"></script>
 
-  <!-- Then load script.js -->
+  <!-- Load your tree script AFTER Panzoom is ready -->
   <script>
     window.addEventListener('load', () => {
       const script = document.createElement('script');
