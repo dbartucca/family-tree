@@ -14,7 +14,6 @@ function createPersonCard(person, id) {
   div.id = `person-${id}`;
   div.dataset.id = id;
 
-  // Filter icon
   const filterBtn = document.createElement('button');
   filterBtn.className = 'filter-icon';
   filterBtn.innerHTML = '👁️';
@@ -32,7 +31,6 @@ function createPersonCard(person, id) {
   `;
   div.appendChild(filterBtn);
 
-  // Info modal trigger
   div.onclick = () => openModal(id);
 
   return div;
@@ -285,7 +283,7 @@ window.onload = async () => {
   const panzoomScript = document.createElement('script');
   panzoomScript.src = "https://cdn.jsdelivr.net/npm/@panzoom/panzoom@9.4.0/dist/panzoom.min.js";
   panzoomScript.onload = () => {
-    const el = document.querySelector('.tree-container');
+    const el = document.querySelector('#panzoom-target');
     Panzoom(el, {
       maxScale: 2,
       minScale: 0.5,
