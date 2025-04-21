@@ -19,6 +19,11 @@
       height: 100vh;
     }
 
+    #panzoom-target {
+      transform-origin: 0 0;
+      position: relative;
+    }
+
     svg.lines {
       position: absolute;
       top: 0;
@@ -141,8 +146,10 @@
 <body>
   <h2>Family Tree</h2>
   <div class="tree-container">
-    <svg class="lines"></svg>
-    <div id="tree-root"></div>
+    <div id="panzoom-target">
+      <svg class="lines"></svg>
+      <div id="tree-root"></div>
+    </div>
   </div>
 
   <!-- Info Modal -->
@@ -156,7 +163,6 @@
     </div>
   </div>
 
-  <!-- Load tree logic -->
   <script src="script.js"></script>
 </body>
 </html>
