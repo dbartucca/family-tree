@@ -10,9 +10,7 @@
       background: #f0f0f0;
       overflow: hidden;
     }
-    .tree-container:active {
-      cursor: grabbing;
-    }
+
     .tree-container {
       position: relative;
       padding: 50px;
@@ -20,6 +18,7 @@
       width: 100vw;
       height: 100vh;
       cursor: grab;
+      touch-action: none;
     }
 
     #panzoom-target {
@@ -166,6 +165,7 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@9.4.0/dist/panzoom.min.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
