@@ -279,19 +279,16 @@ window.onload = async () => {
   await fetchData();
   renderTree(data);
 
-  const panzoomScript = document.createElement('script');
-  panzoomScript.src = "https://cdn.jsdelivr.net/npm/@panzoom/panzoom@9.4.0/dist/panzoom.min.js";
-  panzoomScript.onload = () => {
-    const el = document.querySelector('#panzoom-target');
-    const panzoom = Panzoom(el, {
-      maxScale: 2,
-      minScale: 0.5,
-      contain: 'outside'
-    });
-    document.querySelector('.tree-container').addEventListener('mousedown', panzoom.pan);
+  const target = document.querySelector('#panzoom-target');
+  const wrapper = document.querySelector('.tree-container');
 
-    const container = document.querySelector('.tree-container');
-    container.addEventListener('wheel', panzoom.zoomWithWheel);
-  };
-  document.body.appendChild(panzoomScript);
+  const panzoom = Panzoom(target, {
+    maxScale: 2,
+    minScale: 0.5,
+    contain: 'outside',
+    startScale: 1
+  });
+
+  wrapper.addEventListener('wheel', panzoom.zoomWithWheel);
+  wrapper.addEventListener('pointerdown', panzoom.handlePointerDown);
 };
