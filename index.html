@@ -14,9 +14,10 @@
     .tree-container {
       position: relative;
       padding: 50px;
-      overflow: auto;
+      overflow: hidden;
       width: 100vw;
       height: 100vh;
+      cursor: grab;
     }
 
     #panzoom-target {
@@ -97,7 +98,6 @@
       margin: 20px 0;
     }
 
-    /* Info Modal */
     .modal {
       display: none;
       position: fixed;
@@ -154,7 +154,6 @@
     </div>
   </div>
 
-  <!-- Info Modal -->
   <div id="modal" class="modal">
     <div class="modal-content">
       <button class="close" onclick="document.getElementById('modal').style.display='none'">✖</button>
