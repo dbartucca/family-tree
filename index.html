@@ -2,21 +2,44 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Family Tree</title>
-  <script src="https://balkangraph.com/js/latest/OrgChart.js"></script>
+  <title>Family Tree Viewer</title>
   <style>
-    html, body {
+    body {
+      font-family: sans-serif;
       margin: 0;
       padding: 0;
-      height: 100%;
+      background: #f7f7f7;
     }
     #tree {
-      width: 100%;
-      height: 100vh;
+      padding: 20px;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+    .person {
+      display: inline-block;
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 10px;
+      margin: 5px;
+      min-width: 140px;
+      text-align: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .connector {
+      height: 20px;
+      border-left: 2px solid #999;
+      margin: 0 auto;
+    }
+    .children {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
     }
   </style>
 </head>
 <body>
+  <h2 style="text-align:center;">Family Tree</h2>
   <div id="tree"></div>
 
   <script src="script.js"></script>
