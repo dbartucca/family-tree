@@ -36,51 +36,103 @@ function drawLine(svg, fromEl, toEl) {
   svg.appendChild(line);
 }
 
-function renderTree(data) {
-  const parentGen = document.getElementById("parent-generation");
-  const childGen = document.getElementById("child-generation");
-  const svg = document.querySelector("svg.lines");
+function assignGenerations(data) {
+  const generations = {};
+  const visited = new Set();
 
-  svg.innerHTML = ""; // Clear lines
-  parentGen.innerHTML = "";
-  childGen.innerHTML = "";
+  function assign(id, level) {
+    if (visited.has(id)) return;
+    visited.add(id);
+    generations[id] = Math.max(generations[id] || 0, level);
 
-  const rendered = new Set();
-  const idToElement = {};
+    const person = data[id];
+    const spouse = person.relations.spouse?.toString();
+    if (spouse && !visited.has(spouse)) {
+      generations[spouse] = level;
+      visited.add(spouse);
+    }
 
-  // Identify top-level people (not children)
-  const allChildren = new Set();
-  for (const person of Object.values(data)) {
-    (person.relations.children || []).forEach(cid => allChildren.add(cid.toString()));
+    (person.relations.children || []).forEach(cid => {
+      assign(cid.toString(), level + 1);
+    });
   }
 
-  const parents = Object.entries(data).filter(([id]) => !allChildren.has(id));
+  const allChildren = new Set();
+  Object.values(data).forEach(p =>
+    (p.relations.children || []).forEach(c => allChildren.add(c.toString()))
+  );
 
-  // Render parents
-  parents.forEach(([id, person]) => {
-    const card = createPersonCard(person, id);
-    parentGen.appendChild(card);
-    idToElement[id] = card;
-    rendered.add(id);
+  Object.keys(data).forEach(id => {
+    if (!allChildren.has(id)) {
+      assign(id, 0);
+    }
   });
 
-  // Render children
-  parents.forEach(([id, person]) => {
-    (person.relations.children || []).forEach(cid => {
-      if (!data[cid] || rendered.has(cid)) return;
-      const childCard = createPersonCard(data[cid], cid);
-      childGen.appendChild(childCard);
-      idToElement[cid] = childCard;
-      rendered.add(cid);
+  return generations;
+}
+
+function renderTree(data) {
+  const container = document.getElementById("tree-root");
+  const svg = document.querySelector("svg.lines");
+  container.innerHTML = "";
+  svg.innerHTML = "";
+
+  const generations = assignGenerations(data);
+  const genGroups = {};
+
+  Object.entries(generations).forEach(([id, level]) => {
+    if (!genGroups[level]) genGroups[level] = new Set();
+    genGroups[level].add(id);
+  });
+
+  const idToEl = {};
+
+  Object.entries(genGroups).forEach(([level, ids]) => {
+    const row = document.createElement("div");
+    row.className = "generation";
+
+    const rendered = new Set();
+
+    ids.forEach(id => {
+      if (rendered.has(id)) return;
+
+      const person = data[id];
+      const spouseId = person.relations.spouse?.toString();
+      let pair;
+
+      if (spouseId && ids.has(spouseId)) {
+        pair = document.createElement("div");
+        pair.className = "spouse-pair";
+        const el1 = createPersonCard(person, id);
+        const el2 = createPersonCard(data[spouseId], spouseId);
+        pair.appendChild(el1);
+        pair.appendChild(el2);
+        idToEl[id] = el1;
+        idToEl[spouseId] = el2;
+        rendered.add(id);
+        rendered.add(spouseId);
+        row.appendChild(pair);
+      } else {
+        const el = createPersonCard(person, id);
+        idToEl[id] = el;
+        rendered.add(id);
+        row.appendChild(el);
+      }
     });
+
+    container.appendChild(row);
   });
 
   function drawAllLines() {
     svg.innerHTML = "";
-    parents.forEach(([id, person]) => {
+    Object.entries(data).forEach(([id, person]) => {
+      const parentEl = idToEl[id];
+      if (!parentEl) return;
+
       (person.relations.children || []).forEach(cid => {
-        if (idToElement[id] && idToElement[cid]) {
-          drawLine(svg, idToElement[id], idToElement[cid]);
+        const childEl = idToEl[cid];
+        if (childEl) {
+          drawLine(svg, parentEl, childEl);
         }
       });
     });
