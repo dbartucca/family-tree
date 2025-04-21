@@ -288,6 +288,7 @@ window.onload = async () => {
       minScale: 0.5,
       contain: 'outside'
     });
+    document.querySelector('.tree-container').addEventListener('mousedown', panzoom.pan);
 
     const container = document.querySelector('.tree-container');
     container.addEventListener('wheel', panzoom.zoomWithWheel);
