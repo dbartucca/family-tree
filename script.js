@@ -284,11 +284,16 @@ window.onload = async () => {
   panzoomScript.src = "https://cdn.jsdelivr.net/npm/@panzoom/panzoom@9.4.0/dist/panzoom.min.js";
   panzoomScript.onload = () => {
     const el = document.querySelector('#panzoom-target');
-    Panzoom(el, {
+    const panzoom = Panzoom(el, {
       maxScale: 2,
       minScale: 0.5,
-      contain: 'outside'
+      contain: 'outside',
+      panOnlyWhenZoomed: false
     });
+    
+    document.querySelector('.tree-container').addEventListener('wheel', panzoom.zoomWithWheel);
+    document.querySelector('.tree-container').addEventListener('mousedown', panzoom.pan);
+
   };
   document.body.appendChild(panzoomScript);
 };
