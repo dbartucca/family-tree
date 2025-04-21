@@ -34,10 +34,10 @@ function toggleFilter(startId) {
   if (isFiltered) {
     allEls.forEach(el => (el.style.display = ''));
     isFiltered = false;
+    drawAllLines();
     return;
   }
 
-  // Traverse relationships
   const toShow = new Set();
 
   function walkAncestors(id) {
@@ -68,13 +68,13 @@ function toggleFilter(startId) {
   walkAncestors(startId);
   walkDescendants(startId);
 
-  // Apply visibility
   allEls.forEach(el => {
     const id = el.dataset.id;
     el.style.display = toShow.has(id) ? '' : 'none';
   });
 
   isFiltered = true;
+  drawAllLines(); // redraw lines for only visible people
 }
 
 function drawLine(svg, fromEl, toEl) {
@@ -161,6 +161,24 @@ function assignGenerations(data) {
   return generations;
 }
 
+let idToEl = {};
+
+function drawAllLines() {
+  const svg = document.querySelector("svg.lines");
+  svg.innerHTML = "";
+
+  for (const [id, person] of Object.entries(data)) {
+    const parentEl = idToEl[id];
+    if (!parentEl || parentEl.style.display === "none") continue;
+
+    (person.relations.children || []).forEach(cid => {
+      const childEl = idToEl[cid];
+      if (!childEl || childEl.style.display === "none") return;
+      drawLine(svg, parentEl, childEl);
+    });
+  }
+}
+
 function renderTree(data) {
   const container = document.getElementById("tree-root");
   const svg = document.querySelector("svg.lines");
@@ -175,7 +193,7 @@ function renderTree(data) {
     genGroups[level].add(id);
   }
 
-  const idToEl = {};
+  idToEl = {};
   const sortedLevels = Object.keys(genGroups).map(Number).sort((a, b) => b - a); // oldest to youngest
 
   for (const level of sortedLevels) {
@@ -219,22 +237,7 @@ function renderTree(data) {
     container.appendChild(row);
   }
 
-  function drawAllLines() {
-    svg.innerHTML = "";
-    for (const [id, person] of Object.entries(data)) {
-      const parentEl = idToEl[id];
-      if (!parentEl) continue;
-
-      (person.relations.children || []).forEach(cid => {
-        const childEl = idToEl[cid];
-        if (childEl && childEl.style.display !== "none") {
-          drawLine(svg, parentEl, childEl);
-        }
-      });
-    }
-  }
-
-  requestAnimationFrame(drawAllLines);
+  drawAllLines();
   window.addEventListener("resize", drawAllLines);
 }
 
