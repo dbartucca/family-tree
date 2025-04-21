@@ -30,7 +30,6 @@ function createPersonCard(person, id) {
     <em>${person.bio.desc}</em>
   `;
   div.appendChild(filterBtn);
-
   div.onclick = () => openModal(id);
 
   return div;
@@ -287,13 +286,11 @@ window.onload = async () => {
     const panzoom = Panzoom(el, {
       maxScale: 2,
       minScale: 0.5,
-      contain: 'outside',
-      panOnlyWhenZoomed: false
+      contain: 'outside'
     });
-    
-    document.querySelector('.tree-container').addEventListener('wheel', panzoom.zoomWithWheel);
-    document.querySelector('.tree-container').addEventListener('mousedown', panzoom.pan);
 
+    const container = document.querySelector('.tree-container');
+    container.addEventListener('wheel', panzoom.zoomWithWheel);
   };
   document.body.appendChild(panzoomScript);
 };
