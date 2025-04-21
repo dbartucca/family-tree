@@ -10,7 +10,7 @@ function createPersonCard(person, id) {
   div.innerHTML = `
     <div class="photo"></div>
     <strong>${person.name.first} ${person.name.middle || ''} ${person.name.last}</strong><br>
-    <small>${person.birth.year}</small><br>
+    <small>${person.birth.year || ''}</small><br>
     <em>${person.bio.desc}</em>
   `;
   return div;
@@ -38,35 +38,47 @@ function drawLine(svg, fromEl, toEl) {
 
 function assignGenerations(data) {
   const generations = {};
-  const visited = new Set();
+  const queue = [];
 
-  function assign(id, level) {
-    if (visited.has(id)) return;
-    visited.add(id);
-    generations[id] = Math.max(generations[id] || 0, level);
-
-    const person = data[id];
-    const spouse = person.relations.spouse?.toString();
-    if (spouse && !visited.has(spouse)) {
-      generations[spouse] = level;
-      visited.add(spouse);
-    }
-
-    (person.relations.children || []).forEach(cid => {
-      assign(cid.toString(), level + 1);
-    });
-  }
-
+  // Identify root people (those who are not children)
   const allChildren = new Set();
-  Object.values(data).forEach(p =>
-    (p.relations.children || []).forEach(c => allChildren.add(c.toString()))
-  );
+  Object.values(data).forEach(person => {
+    (person.relations.children || []).forEach(cid => allChildren.add(cid.toString()));
+  });
 
   Object.keys(data).forEach(id => {
     if (!allChildren.has(id)) {
-      assign(id, 0);
+      generations[id] = 0;
+      queue.push(id);
     }
   });
+
+  while (queue.length > 0) {
+    const id = queue.shift();
+    const person = data[id];
+    const currentGen = generations[id];
+
+    // Handle spouse
+    const spouseId = person.relations.spouse?.toString();
+    if (spouseId) {
+      const spouseGen = generations[spouseId];
+      const maxGen = Math.max(currentGen, spouseGen ?? -1);
+      if (spouseGen === undefined || spouseGen < maxGen) {
+        generations[spouseId] = maxGen;
+        queue.push(spouseId);
+      }
+      generations[id] = maxGen;
+    }
+
+    // Handle children
+    (person.relations.children || []).forEach(cid => {
+      const childGen = generations[cid];
+      if (childGen === undefined || childGen < currentGen + 1) {
+        generations[cid] = currentGen + 1;
+        queue.push(cid.toString());
+      }
+    });
+  }
 
   return generations;
 }
@@ -80,28 +92,27 @@ function renderTree(data) {
   const generations = assignGenerations(data);
   const genGroups = {};
 
-  Object.entries(generations).forEach(([id, level]) => {
+  for (const [id, level] of Object.entries(generations)) {
     if (!genGroups[level]) genGroups[level] = new Set();
     genGroups[level].add(id);
-  });
+  }
 
   const idToEl = {};
 
-  Object.entries(genGroups).forEach(([level, ids]) => {
+  for (const [level, ids] of Object.entries(genGroups)) {
     const row = document.createElement("div");
     row.className = "generation";
 
     const rendered = new Set();
 
-    ids.forEach(id => {
-      if (rendered.has(id)) return;
+    for (const id of ids) {
+      if (rendered.has(id)) continue;
 
       const person = data[id];
       const spouseId = person.relations.spouse?.toString();
-      let pair;
 
-      if (spouseId && ids.has(spouseId)) {
-        pair = document.createElement("div");
+      if (spouseId && ids.has(spouseId) && !rendered.has(spouseId)) {
+        const pair = document.createElement("div");
         pair.className = "spouse-pair";
         const el1 = createPersonCard(person, id);
         const el2 = createPersonCard(data[spouseId], spouseId);
@@ -118,16 +129,16 @@ function renderTree(data) {
         rendered.add(id);
         row.appendChild(el);
       }
-    });
+    }
 
     container.appendChild(row);
-  });
+  }
 
   function drawAllLines() {
     svg.innerHTML = "";
-    Object.entries(data).forEach(([id, person]) => {
+    for (const [id, person] of Object.entries(data)) {
       const parentEl = idToEl[id];
-      if (!parentEl) return;
+      if (!parentEl) continue;
 
       (person.relations.children || []).forEach(cid => {
         const childEl = idToEl[cid];
@@ -135,7 +146,7 @@ function renderTree(data) {
           drawLine(svg, parentEl, childEl);
         }
       });
-    });
+    }
   }
 
   requestAnimationFrame(drawAllLines);
