@@ -93,5 +93,6 @@ window.onload = async () => {
           drawLines(svg, idToEl[id], idToEl[childId]);
         }
       });
-  }
+    }
   });
+};
