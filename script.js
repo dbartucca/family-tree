@@ -1,20 +1,24 @@
+let data = {};
+
 async function fetchData() {
   const response = await fetch('data.json');
-  return await response.json();
+  data = await response.json();
+  return data;
 }
 
 function createPersonCard(person, id) {
   const div = document.createElement('div');
   div.className = 'person';
   div.id = `person-${id}`;
+  div.dataset.id = id;
 
   const toggle = document.createElement('button');
   toggle.textContent = "−";
   toggle.className = "toggle";
   toggle.onclick = () => {
-    const block = div.closest(".family-block");
-    if (block) block.classList.toggle("collapsed");
-    toggle.textContent = block.classList.contains("collapsed") ? "+" : "−";
+    const isCollapsed = toggle.textContent === "−";
+    toggle.textContent = isCollapsed ? "+" : "−";
+    toggleDescendants(id, isCollapsed);
   };
 
   div.innerHTML = `
@@ -25,6 +29,23 @@ function createPersonCard(person, id) {
   `;
   div.prepend(toggle);
   return div;
+}
+
+function toggleDescendants(id, shouldCollapse) {
+  const person = data[id];
+  if (!person || !person.relations.children) return;
+
+  person.relations.children.forEach(childId => {
+    const el = document.getElementById(`person-${childId}`);
+    const spouseId = data[childId].relations.spouse?.toString();
+    const spouseEl = spouseId ? document.getElementById(`person-${spouseId}`) : null;
+
+    if (el) el.style.display = shouldCollapse ? "none" : "";
+    if (spouseEl) spouseEl.style.display = shouldCollapse ? "none" : "";
+
+    // Recurse
+    toggleDescendants(childId.toString(), shouldCollapse);
+  });
 }
 
 function drawLine(svg, fromEl, toEl) {
@@ -126,7 +147,7 @@ function renderTree(data) {
   }
 
   const idToEl = {};
-  const sortedLevels = Object.keys(genGroups).map(Number).sort((a, b) => b - a); // eldest to youngest
+  const sortedLevels = Object.keys(genGroups).map(Number).sort((a, b) => b - a); // oldest to youngest
 
   for (const level of sortedLevels) {
     const ids = genGroups[level];
@@ -177,7 +198,7 @@ function renderTree(data) {
 
       (person.relations.children || []).forEach(cid => {
         const childEl = idToEl[cid];
-        if (childEl) {
+        if (childEl && childEl.style.display !== "none") {
           drawLine(svg, parentEl, childEl);
         }
       });
@@ -189,10 +210,9 @@ function renderTree(data) {
 }
 
 window.onload = async () => {
-  const data = await fetchData();
+  await fetchData();
   renderTree(data);
 
-  // Enable Panzoom
   const panzoomScript = document.createElement('script');
   panzoomScript.src = "https://cdn.jsdelivr.net/npm/@panzoom/panzoom@9.4.0/dist/panzoom.min.js";
   panzoomScript.onload = () => {
