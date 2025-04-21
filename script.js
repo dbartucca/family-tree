@@ -1,39 +1,61 @@
-fetch('data.json')
-  .then(response => response.json())
-  .then(rawData => {
-    const familyTreeData = Object.entries(rawData).map(([id, person]) => {
-      const fullName = `${person.name.first} ${person.name.middle || ''} ${person.name.last}`.trim();
-      const birth = person.birth ? `${person.birth.year}` : '';
-      const gender = person.bio.gender || 'M';
+async function fetchData() {
+  const response = await fetch('data.json');
+  const data = await response.json();
+  return data;
+}
 
-      const node = {
-        id: parseInt(id),
-        name: fullName,
-        birth: birth,
-        bio: person.bio.desc,
-        gender: gender,
-        img: gender === 'F'
-          ? "https://cdn.balkan.app/shared/female.jpg"
-          : "https://cdn.balkan.app/shared/male.jpg"
-      };
+function createPersonCard(person) {
+  const div = document.createElement('div');
+  div.className = 'person';
+  div.innerHTML = `
+    <strong>${person.name.first} ${person.name.middle || ''} ${person.name.last}</strong><br>
+    <small>${person.birth.year || ''}</small><br>
+    <em>${person.bio.desc}</em>
+  `;
+  return div;
+}
 
-      // Prefer mother as parent node if defined
-      if (person.relations.mother) {
-        node.pid = person.relations.mother;
-      } else if (person.relations.father) {
-        node.pid = person.relations.father;
-      }
+function buildTree(data, rootId, container) {
+  const person = data[rootId];
+  if (!person) return;
 
-      return node;
+  const personCard = createPersonCard(person);
+  container.appendChild(personCard);
+
+  const childrenContainer = document.createElement('div');
+  childrenContainer.className = 'children';
+
+  if (person.relations.children && person.relations.children.length > 0) {
+    const connector = document.createElement('div');
+    connector.className = 'connector';
+    container.appendChild(connector);
+
+    container.appendChild(childrenContainer);
+
+    person.relations.children.forEach(childId => {
+      const childWrapper = document.createElement('div');
+      buildTree(data, childId, childWrapper);
+      childrenContainer.appendChild(childWrapper);
     });
+  }
+}
 
-    const chart = new OrgChart(document.getElementById("tree"), {
-      nodeBinding: {
-        field_0: "name",
-        field_1: "birth",
-        img_0: "img"
-      }
-    });
+window.onload = async () => {
+  const data = await fetchData();
+  const treeContainer = document.getElementById('tree');
 
-    chart.load(familyTreeData);
+  // Find root people (those who are not listed as a child)
+  const allChildren = new Set();
+  for (const id in data) {
+    const person = data[id];
+    (person.relations.children || []).forEach(cid => allChildren.add(cid));
+  }
+
+  const rootPeople = Object.keys(data).filter(id => !allChildren.has(parseInt(id)));
+
+  rootPeople.forEach(rootId => {
+    const rootWrapper = document.createElement('div');
+    buildTree(data, rootId, rootWrapper);
+    treeContainer.appendChild(rootWrapper);
   });
+};
