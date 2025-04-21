@@ -126,7 +126,10 @@ function renderTree(data) {
 
   const idToEl = {};
 
-  for (const [level, ids] of Object.entries(genGroups)) {
+  // ⬇️ Sort from eldest to youngest
+  const sortedLevels = Object.keys(genGroups).map(Number).sort((a, b) => b - a);
+  for (const level of sortedLevels) {
+    const ids = genGroups[level];
     const row = document.createElement("div");
     row.className = "generation";
 
