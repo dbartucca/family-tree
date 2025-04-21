@@ -68,6 +68,22 @@
       margin: 0 auto 10px;
     }
 
+    .filter-icon {
+      position: absolute;
+      top: 4px;
+      right: 6px;
+      font-size: 14px;
+      border: none;
+      background: none;
+      filter: grayscale(100%);
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .filter-icon.active {
+      filter: none;
+    }
+
     h2 {
       text-align: center;
       margin: 20px 0;
@@ -81,7 +97,7 @@
     <div id="tree-root"></div>
   </div>
 
-  <!-- Load script.js -->
+  <!-- Load tree logic -->
   <script src="script.js"></script>
 </body>
 </html>
