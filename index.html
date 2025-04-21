@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8" />
   <title>Family Tree</title>
   <script src="https://balkangraph.com/js/latest/OrgChart.js"></script>
   <style>
@@ -19,17 +19,6 @@
 <body>
   <div id="tree"></div>
 
-  <script src="treeData.js"></script> <!-- You'll convert your JSON into this JS format -->
-  <script>
-    const chart = new OrgChart(document.getElementById("tree"), {
-      nodeBinding: {
-        field_0: "name",
-        field_1: "birth",
-        img_0: "img"
-      }
-    });
-
-    chart.load(familyTreeData);
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
