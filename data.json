@@ -175,7 +175,7 @@
       "mother": null,
       "father": null,
       "spouse": 8,
-      "children": [3,18]
+      "children": [3,18,21,22,23,24,25,26]
     },
     "bio": {
       "desc": "Bio of Mimi",
@@ -208,7 +208,7 @@
       "mother": null,
       "father": null,
       "spouse": 7,
-      "children": [3,18]
+      "children": [3,18,21,22,23,24,25,26]
     },
     "bio": {
       "desc": "Bio of Paw Paw",
@@ -517,6 +517,314 @@
     },
     "bio": {
       "desc": "Bio of Thomas",
+      "gender": "M"
+    }
+  },
+  "21": {
+    "name": {
+      "first": "Ann",
+      "middle":"Marie",
+      "last": "Bartucca"
+    },
+    "birth": {
+      "year": null,
+      "month": null,
+      "day": null,
+      "city": "Norwood",
+      "state": "Massachusetts",
+      "country": "US"
+    },
+    "relations": {
+      "mother": 7,
+      "father": 8,
+      "spouse": null,
+      "children": []
+    },
+    "bio": {
+      "desc": "Bio of Ann Marie",
+      "gender": "F"
+    }
+  },
+  "22": {
+    "name": {
+      "first": "Theresa",
+      "middle":"Marie",
+      "last": "Bartucca"
+    },
+    "birth": {
+      "year": null,
+      "month": null,
+      "day": null,
+      "city": "Norwood",
+      "state": "Massachusetts",
+      "country": "US"
+    },
+    "relations": {
+      "mother": 7,
+      "father": 8,
+      "spouse": null,
+      "children": []
+    },
+    "bio": {
+      "desc": "Bio of Theresa",
+      "gender": "F"
+    }
+  },
+  "23": {
+    "name": {
+      "first": "Anthony",
+      "middle":"Domenic",
+      "last": "Bartucca"
+    },
+    "birth": {
+      "year": null,
+      "month": null,
+      "day": null,
+      "city": "Norwood",
+      "state": "Massachusetts",
+      "country": "US"
+    },
+    "relations": {
+      "mother": 7,
+      "father": 8,
+      "spouse": null,
+      "children": []
+    },
+    "bio": {
+      "desc": "Bio of Anthony",
+      "gender": "M"
+    }
+  },
+  "24": {
+    "name": {
+      "first": "Jean",
+      "middle":"Marie",
+      "last": "Bartucca"
+    },
+    "birth": {
+      "year": 1959,
+      "month": 9,
+      "day": 7,
+      "city": "Norwood",
+      "state": "Massachusetts",
+      "country": "US"
+    },
+    "death": {
+      "year": 2023,
+      "month": 12,
+      "day": 2,
+      "city": "Plymouth",
+      "state": "Massachusetts",
+      "country": "US"
+    },
+    "relations": {
+      "mother": 7,
+      "father": 8,
+      "spouse": null,
+      "children": []
+    },
+    "bio": {
+      "desc": "Bio of Jean",
+      "gender": "F"
+    }
+  },
+  "25": {
+    "name": {
+      "first": "Elizabeth",
+      "middle":"Marie",
+      "last": "Bartucca"
+    },
+    "birth": {
+      "year": 1968,
+      "month": 7,
+      "day": 15,
+      "city": "Norwood",
+      "state": "Massachusetts",
+      "country": "US"
+    },
+    "relations": {
+      "mother": 7,
+      "father": 8,
+      "spouse": null,
+      "children": []
+    },
+    "bio": {
+      "desc": "Bio of Elizabeth",
+      "gender": "F"
+    }
+  },
+  "26": {
+    "name": {
+      "first": "Frank",
+      "middle":"",
+      "last": "Bartucca"
+    },
+    "birth": {
+      "year": 1957,
+      "month": 7,
+      "day": 11,
+      "city": "Norwood",
+      "state": "Massachusetts",
+      "country": "US"
+    },
+    "relations": {
+      "mother": 7,
+      "father": 8,
+      "spouse": null,
+      "children": []
+    },
+    "bio": {
+      "desc": "Bio of Frank",
+      "gender": "M"
+    }
+  },
+  "27": {
+    "name": {
+      "first": "Laurie",
+      "middle":"",
+      "last": "Jaegers"
+    },
+    "birth": {
+      "year": null,
+      "month": null,
+      "day": null,
+      "city": "",
+      "state": "",
+      "country": ""
+    },
+    "relations": {
+      "mother": null,
+      "father": null,
+      "spouse": 26,
+      "children": []
+    },
+    "bio": {
+      "desc": "Bio of Laurie",
+      "gender": "F"
+    }
+  },
+  "28": {
+    "name": {
+      "first": "James",
+      "middle":"",
+      "last": "Coulter"
+    },
+    "birth": {
+      "year": null,
+      "month": null,
+      "day": null,
+      "city": "",
+      "state": "",
+      "country": "US"
+    },
+    "relations": {
+      "mother": null,
+      "father": null,
+      "spouse": 25,
+      "children": []
+    },
+    "bio": {
+      "desc": "Bio of James",
+      "gender": "M"
+    }
+  },
+  "29": {
+    "name": {
+      "first": "Gerard",
+      "middle":"",
+      "last": "Ceurvels"
+    },
+    "birth": {
+      "year": null,
+      "month": null,
+      "day": null,
+      "city": "",
+      "state": "",
+      "country": ""
+    },
+    "relations": {
+      "mother": null,
+      "father": null,
+      "spouse": 24,
+      "children": []
+    },
+    "bio": {
+      "desc": "Bio of Gerard",
+      "gender": "M"
+    }
+  },
+  "30": {
+    "name": {
+      "first": "Susan",
+      "middle":"",
+      "last": ""
+    },
+    "birth": {
+      "year": null,
+      "month": null,
+      "day": null,
+      "city": "",
+      "state": "",
+      "country": "US"
+    },
+    "relations": {
+      "mother": null,
+      "father": null,
+      "spouse": 23,
+      "children": []
+    },
+    "bio": {
+      "desc": "Bio of Susan",
+      "gender": "F"
+    }
+  },
+  "31": {
+    "name": {
+      "first": "Steven",
+      "middle":"",
+      "last": "Anderson"
+    },
+    "birth": {
+      "year": null,
+      "month": null,
+      "day": null,
+      "city": "",
+      "state": "",
+      "country": "US"
+    },
+    "relations": {
+      "mother": null,
+      "father": null,
+      "spouse": 22,
+      "children": []
+    },
+    "bio": {
+      "desc": "Bio of Steven",
+      "gender": "M"
+    }
+  },
+  "32": {
+    "name": {
+      "first": "Robert",
+      "middle":"",
+      "last": "Selee"
+    },
+    "birth": {
+      "year": null,
+      "month": null,
+      "day": null,
+      "city": "",
+      "state": "",
+      "country": "US"
+    },
+    "relations": {
+      "mother": null,
+      "father": null,
+      "spouse": 21,
+      "children": []
+    },
+    "bio": {
+      "desc": "Bio of Robert",
       "gender": "M"
     }
   }
