@@ -7,12 +7,23 @@ function createPersonCard(person, id) {
   const div = document.createElement('div');
   div.className = 'person';
   div.id = `person-${id}`;
+
+  const toggle = document.createElement('button');
+  toggle.textContent = "−";
+  toggle.className = "toggle";
+  toggle.onclick = () => {
+    const block = div.closest(".family-block");
+    if (block) block.classList.toggle("collapsed");
+    toggle.textContent = block.classList.contains("collapsed") ? "+" : "−";
+  };
+
   div.innerHTML = `
     <div class="photo"></div>
     <strong>${person.name.first} ${person.name.middle || ''} ${person.name.last}</strong><br>
     <small>${person.birth.year || ''}</small><br>
     <em>${person.bio.desc}</em>
   `;
+  div.prepend(toggle);
   return div;
 }
 
@@ -41,26 +52,20 @@ function assignGenerations(data) {
   const constraints = [];
   const childToParents = {};
 
-  // Build constraints:
   for (const [id, person] of Object.entries(data)) {
-    // Parent → Child: parent = child + 1
     const children = person.relations.children || [];
     for (const cid of children) {
       constraints.push({ above: id, below: cid.toString() });
-
-      // Track siblings
       if (!childToParents[cid]) childToParents[cid] = [];
       childToParents[cid].push(id);
     }
 
-    // Spouse → Same Gen
     const spouseId = person.relations.spouse?.toString();
     if (spouseId && data[spouseId]) {
       constraints.push({ same: [id, spouseId] });
     }
   }
 
-  // Add sibling constraints: same generation
   const siblingSets = {};
   for (const [childId, parentList] of Object.entries(childToParents)) {
     const key = parentList.sort().join("-");
@@ -73,16 +78,13 @@ function assignGenerations(data) {
     }
   }
 
-  // Assign initial gen = 0 to all
   for (const id of Object.keys(data)) {
     generations[id] = 0;
   }
 
-  // Iteratively apply constraints until stable
   let changed;
   do {
     changed = false;
-
     for (const rule of constraints) {
       if (rule.above && rule.below) {
         const above = rule.above;
@@ -104,7 +106,6 @@ function assignGenerations(data) {
         }
       }
     }
-
   } while (changed);
 
   return generations;
@@ -125,9 +126,8 @@ function renderTree(data) {
   }
 
   const idToEl = {};
+  const sortedLevels = Object.keys(genGroups).map(Number).sort((a, b) => b - a); // eldest to youngest
 
-  // ⬇️ Sort from eldest to youngest
-  const sortedLevels = Object.keys(genGroups).map(Number).sort((a, b) => b - a);
   for (const level of sortedLevels) {
     const ids = genGroups[level];
     const row = document.createElement("div");
@@ -141,6 +141,9 @@ function renderTree(data) {
       const person = data[id];
       const spouseId = person.relations.spouse?.toString();
 
+      const wrapper = document.createElement("div");
+      wrapper.className = "family-block";
+
       if (spouseId && ids.has(spouseId) && !rendered.has(spouseId)) {
         const pair = document.createElement("div");
         pair.className = "spouse-pair";
@@ -152,13 +155,15 @@ function renderTree(data) {
         idToEl[spouseId] = el2;
         rendered.add(id);
         rendered.add(spouseId);
-        row.appendChild(pair);
+        wrapper.appendChild(pair);
       } else {
         const el = createPersonCard(person, id);
         idToEl[id] = el;
         rendered.add(id);
-        row.appendChild(el);
+        wrapper.appendChild(el);
       }
+
+      row.appendChild(wrapper);
     }
 
     container.appendChild(row);
@@ -186,4 +191,17 @@ function renderTree(data) {
 window.onload = async () => {
   const data = await fetchData();
   renderTree(data);
+
+  // Enable Panzoom
+  const panzoomScript = document.createElement('script');
+  panzoomScript.src = "https://cdn.jsdelivr.net/npm/@panzoom/panzoom@9.4.0/dist/panzoom.min.js";
+  panzoomScript.onload = () => {
+    const el = document.querySelector('.tree-container');
+    Panzoom(el, {
+      maxScale: 2,
+      minScale: 0.5,
+      contain: 'outside'
+    });
+  };
+  document.body.appendChild(panzoomScript);
 };
