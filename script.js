@@ -36,48 +36,57 @@ function drawLine(svg, fromEl, toEl) {
   svg.appendChild(line);
 }
 
-function assignGenerations(data) {
+function assignGenerationsBottomUp(data) {
   const generations = {};
-  const queue = [];
+  const childToParents = {};
+  const parentsToChildren = {};
 
-  // Identify root people (those who are not children)
-  const allChildren = new Set();
-  Object.values(data).forEach(person => {
-    (person.relations.children || []).forEach(cid => allChildren.add(cid.toString()));
-  });
-
-  Object.keys(data).forEach(id => {
-    if (!allChildren.has(id)) {
-      generations[id] = 0;
-      queue.push(id);
-    }
-  });
-
-  while (queue.length > 0) {
-    const id = queue.shift();
-    const person = data[id];
-    const currentGen = generations[id];
-
-    // Handle spouse
-    const spouseId = person.relations.spouse?.toString();
-    if (spouseId) {
-      const spouseGen = generations[spouseId];
-      const maxGen = Math.max(currentGen, spouseGen ?? -1);
-      if (spouseGen === undefined || spouseGen < maxGen) {
-        generations[spouseId] = maxGen;
-        queue.push(spouseId);
-      }
-      generations[id] = maxGen;
-    }
-
-    // Handle children
+  // Build reverse index
+  Object.entries(data).forEach(([id, person]) => {
     (person.relations.children || []).forEach(cid => {
-      const childGen = generations[cid];
-      if (childGen === undefined || childGen < currentGen + 1) {
-        generations[cid] = currentGen + 1;
-        queue.push(cid.toString());
+      const childId = cid.toString();
+      if (!childToParents[childId]) childToParents[childId] = new Set();
+      childToParents[childId].add(id);
+
+      if (!parentsToChildren[id]) parentsToChildren[id] = new Set();
+      parentsToChildren[id].add(childId);
+    });
+  });
+
+  // Start with leaf nodes (no children)
+  const toVisit = Object.keys(data).filter(id => !parentsToChildren[id]);
+
+  const visited = new Set();
+  while (toVisit.length > 0) {
+    const id = toVisit.shift();
+    if (visited.has(id)) continue;
+
+    const person = data[id];
+    const gen = generations[id] ?? 0;
+
+    // Assign to parents: parentGen = max(childGen + 1)
+    const mother = person.relations.mother?.toString();
+    const father = person.relations.father?.toString();
+
+    [mother, father].forEach(pid => {
+      if (!pid || !data[pid]) return;
+      const newGen = gen + 1;
+      if (generations[pid] === undefined || generations[pid] < newGen) {
+        generations[pid] = newGen;
+        toVisit.push(pid);
       }
     });
+
+    // Assign to spouse (match generation)
+    const spouse = person.relations.spouse?.toString();
+    if (spouse && data[spouse]) {
+      if (generations[spouse] === undefined || generations[spouse] < gen) {
+        generations[spouse] = gen;
+        toVisit.push(spouse);
+      }
+    }
+
+    visited.add(id);
   }
 
   return generations;
@@ -89,7 +98,7 @@ function renderTree(data) {
   container.innerHTML = "";
   svg.innerHTML = "";
 
-  const generations = assignGenerations(data);
+  const generations = assignGenerationsBottomUp(data);
   const genGroups = {};
 
   for (const [id, level] of Object.entries(generations)) {
