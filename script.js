@@ -14,11 +14,11 @@ function createPersonCard(person, id) {
   div.id = `person-${id}`;
   div.dataset.id = id;
 
-  // Filter icon button
+  // Filter icon
   const filterBtn = document.createElement('button');
   filterBtn.className = 'filter-icon';
-  filterBtn.title = 'Focus on this person';
   filterBtn.innerHTML = '👁️';
+  filterBtn.title = 'Focus on this person';
   filterBtn.onclick = (e) => {
     e.stopPropagation();
     toggleFilter(id, filterBtn);
@@ -31,13 +31,37 @@ function createPersonCard(person, id) {
     <em>${person.bio.desc}</em>
   `;
   div.appendChild(filterBtn);
+
+  // Info modal trigger
+  div.onclick = () => openModal(id);
+
   return div;
+}
+
+function openModal(id) {
+  const person = data[id];
+  if (!person) return;
+
+  document.getElementById('modal-name').textContent =
+    `${person.name.first} ${person.name.middle || ''} ${person.name.last}`;
+  document.getElementById('modal-bio').textContent = person.bio.desc || '';
+
+  const birth = person.birth;
+  document.getElementById('modal-birth').textContent = birth
+    ? `Born: ${birth.month}/${birth.day}/${birth.year} in ${birth.city}, ${birth.state}, ${birth.country}`
+    : '';
+
+  const death = person.death;
+  document.getElementById('modal-death').textContent = death
+    ? `Died: ${death.month}/${death.day}/${death.year} in ${death.city}, ${death.state}, ${death.country}`
+    : '';
+
+  document.getElementById('modal').style.display = 'flex';
 }
 
 function toggleFilter(newId, clickedBtn) {
   const allBtns = document.querySelectorAll('.filter-icon');
 
-  // Turn off filter if clicking the same button again
   if (isFiltered && newId === activeFilterId) {
     document.querySelectorAll('.person').forEach(el => (el.style.display = ''));
     allBtns.forEach(btn => btn.classList.remove('active'));
@@ -47,11 +71,8 @@ function toggleFilter(newId, clickedBtn) {
     return;
   }
 
-  // Otherwise switch focus
   activeFilterId = newId;
   isFiltered = true;
-
-  // Update button states
   allBtns.forEach(btn => btn.classList.remove('active'));
   clickedBtn.classList.add('active');
 
@@ -85,7 +106,6 @@ function toggleFilter(newId, clickedBtn) {
   walkAncestors(newId);
   walkDescendants(newId);
 
-  // Apply visibility
   document.querySelectorAll('.person').forEach(el => {
     const id = el.dataset.id;
     el.style.display = toShow.has(id) ? '' : 'none';
@@ -211,7 +231,7 @@ function renderTree(data) {
   }
 
   idToEl = {};
-  const sortedLevels = Object.keys(genGroups).map(Number).sort((a, b) => b - a); // oldest to youngest
+  const sortedLevels = Object.keys(genGroups).map(Number).sort((a, b) => b - a);
 
   for (const level of sortedLevels) {
     const ids = genGroups[level];
