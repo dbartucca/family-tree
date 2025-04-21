@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Family Tree</title>
+  <title>Family Tree (Generational)</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -29,6 +29,10 @@
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
       position: relative;
     }
+    .spouse-pair {
+      display: flex;
+      gap: 10px;
+    }
     .photo {
       width: 60px;
       height: 60px;
@@ -51,8 +55,7 @@
   <h2 style="text-align:center;">Family Tree</h2>
   <div class="tree-container">
     <svg class="lines"></svg>
-    <div class="generation" id="parent-generation"></div>
-    <div class="generation" id="child-generation"></div>
+    <div id="tree-root"></div>
   </div>
   <script src="script.js"></script>
 </body>
