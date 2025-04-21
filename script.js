@@ -1,4 +1,5 @@
 let data = {};
+let isFiltered = false;
 
 async function fetchData() {
   const response = await fetch('data.json');
@@ -12,13 +13,68 @@ function createPersonCard(person, id) {
   div.id = `person-${id}`;
   div.dataset.id = id;
 
+  // Filter button
+  const filterBtn = document.createElement('button');
+  filterBtn.textContent = "👁️";
+  filterBtn.className = "filter";
+  filterBtn.onclick = () => toggleFilter(id);
+
   div.innerHTML = `
     <div class="photo"></div>
     <strong>${person.name.first} ${person.name.middle || ''} ${person.name.last}</strong><br>
     <small>${person.birth.year || ''}</small><br>
     <em>${person.bio.desc}</em>
   `;
+  div.prepend(filterBtn);
   return div;
+}
+
+function toggleFilter(startId) {
+  const allEls = document.querySelectorAll('.person');
+  if (isFiltered) {
+    allEls.forEach(el => (el.style.display = ''));
+    isFiltered = false;
+    return;
+  }
+
+  // Traverse relationships
+  const toShow = new Set();
+
+  function walkAncestors(id) {
+    const person = data[id];
+    if (!person) return;
+    toShow.add(id);
+    const mother = person.relations.mother?.toString();
+    const father = person.relations.father?.toString();
+    if (mother) walkAncestors(mother);
+    if (father) walkAncestors(father);
+  }
+
+  function walkDescendants(id) {
+    const person = data[id];
+    if (!person) return;
+    toShow.add(id);
+    const children = person.relations.children || [];
+    for (const childId of children) {
+      toShow.add(childId.toString());
+      const spouse = data[childId]?.relations.spouse?.toString();
+      if (spouse) toShow.add(spouse);
+      walkDescendants(childId.toString());
+    }
+  }
+
+  const spouse = data[startId].relations.spouse?.toString();
+  if (spouse) toShow.add(spouse);
+  walkAncestors(startId);
+  walkDescendants(startId);
+
+  // Apply visibility
+  allEls.forEach(el => {
+    const id = el.dataset.id;
+    el.style.display = toShow.has(id) ? '' : 'none';
+  });
+
+  isFiltered = true;
 }
 
 function drawLine(svg, fromEl, toEl) {
@@ -171,7 +227,7 @@ function renderTree(data) {
 
       (person.relations.children || []).forEach(cid => {
         const childEl = idToEl[cid];
-        if (childEl) {
+        if (childEl && childEl.style.display !== "none") {
           drawLine(svg, parentEl, childEl);
         }
       });
