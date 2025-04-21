@@ -2,82 +2,57 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Structured Family Tree</title>
+  <title>Family Tree</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       margin: 0;
-      background: #f4f4f4;
+      background: #f0f0f0;
     }
-    .tree-wrapper {
+    .tree-container {
       position: relative;
-    }
-    .tree {
-      padding: 40px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 60px;
-      z-index: 1;
-      position: relative;
-    }
-    svg.connector-lines {
-      position: absolute;
-      top: 0;
-      left: 0;
-      z-index: 0;
-      pointer-events: none;
-      width: 100%;
-      height: 100%;
+      padding: 50px;
     }
     .generation {
       display: flex;
       justify-content: center;
-      gap: 60px;
-      flex-wrap: wrap;
-    }
-    .family {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    .parents {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .children {
-      display: flex;
-      gap: 10px;
-      margin-top: 20px;
+      gap: 40px;
+      margin-bottom: 80px;
     }
     .person {
       background: white;
       border: 1px solid #ccc;
       border-radius: 10px;
       padding: 10px;
-      min-width: 150px;
+      width: 160px;
       text-align: center;
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
       position: relative;
     }
-    .person .photo {
+    .photo {
       width: 60px;
       height: 60px;
+      background: #ddd;
       border-radius: 50%;
-      background: #ccc;
       margin: 0 auto 10px;
     }
-    h2 {
-      text-align: center;
+    svg.lines {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 0;
+      width: 100%;
+      height: 100%;
     }
   </style>
 </head>
 <body>
-  <h2>Family Tree</h2>
-  <div class="tree-wrapper">
-    <svg class="connector-lines"></svg>
-    <div class="tree" id="tree"></div>
+  <h2 style="text-align:center;">Family Tree</h2>
+  <div class="tree-container">
+    <svg class="lines"></svg>
+    <div class="generation" id="parent-generation"></div>
+    <div class="generation" id="child-generation"></div>
   </div>
   <script src="script.js"></script>
 </body>
