@@ -1,5 +1,6 @@
 let data = {};
 let isFiltered = false;
+let activeFilterId = null;
 
 async function fetchData() {
   const response = await fetch('data.json');
@@ -13,11 +14,15 @@ function createPersonCard(person, id) {
   div.id = `person-${id}`;
   div.dataset.id = id;
 
-  // Filter button
+  // Filter icon button
   const filterBtn = document.createElement('button');
-  filterBtn.textContent = "👁️";
-  filterBtn.className = "filter";
-  filterBtn.onclick = () => toggleFilter(id);
+  filterBtn.className = 'filter-icon';
+  filterBtn.title = 'Focus on this person';
+  filterBtn.innerHTML = '👁️';
+  filterBtn.onclick = (e) => {
+    e.stopPropagation();
+    toggleFilter(id, filterBtn);
+  };
 
   div.innerHTML = `
     <div class="photo"></div>
@@ -25,18 +30,30 @@ function createPersonCard(person, id) {
     <small>${person.birth.year || ''}</small><br>
     <em>${person.bio.desc}</em>
   `;
-  div.prepend(filterBtn);
+  div.appendChild(filterBtn);
   return div;
 }
 
-function toggleFilter(startId) {
-  const allEls = document.querySelectorAll('.person');
-  if (isFiltered) {
-    allEls.forEach(el => (el.style.display = ''));
+function toggleFilter(newId, clickedBtn) {
+  const allBtns = document.querySelectorAll('.filter-icon');
+
+  // Turn off filter if clicking the same button again
+  if (isFiltered && newId === activeFilterId) {
+    document.querySelectorAll('.person').forEach(el => (el.style.display = ''));
+    allBtns.forEach(btn => btn.classList.remove('active'));
     isFiltered = false;
+    activeFilterId = null;
     drawAllLines();
     return;
   }
+
+  // Otherwise switch focus
+  activeFilterId = newId;
+  isFiltered = true;
+
+  // Update button states
+  allBtns.forEach(btn => btn.classList.remove('active'));
+  clickedBtn.classList.add('active');
 
   const toShow = new Set();
 
@@ -63,18 +80,18 @@ function toggleFilter(startId) {
     }
   }
 
-  const spouse = data[startId].relations.spouse?.toString();
+  const spouse = data[newId].relations.spouse?.toString();
   if (spouse) toShow.add(spouse);
-  walkAncestors(startId);
-  walkDescendants(startId);
+  walkAncestors(newId);
+  walkDescendants(newId);
 
-  allEls.forEach(el => {
+  // Apply visibility
+  document.querySelectorAll('.person').forEach(el => {
     const id = el.dataset.id;
     el.style.display = toShow.has(id) ? '' : 'none';
   });
 
-  isFiltered = true;
-  drawAllLines(); // redraw lines for only visible people
+  drawAllLines();
 }
 
 function drawLine(svg, fromEl, toEl) {
