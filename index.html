@@ -156,7 +156,6 @@
     </div>
   </div>
 
-  <!-- Info Modal -->
   <div id="modal" class="modal">
     <div class="modal-content">
       <button class="close" onclick="document.getElementById('modal').style.display='none'">✖</button>
@@ -167,14 +166,16 @@
     </div>
   </div>
 
-  <!-- Load Panzoom first -->
+  <!-- Load Panzoom FIRST -->
   <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@9.4.0/dist/panzoom.min.js"></script>
 
-  <!-- Then load your script -->
+  <!-- Then load script.js -->
   <script>
-    const script = document.createElement('script');
-    script.src = 'script.js';
-    document.body.appendChild(script);
+    window.addEventListener('load', () => {
+      const script = document.createElement('script');
+      script.src = 'script.js';
+      document.body.appendChild(script);
+    });
   </script>
 </body>
 </html>
