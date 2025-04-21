@@ -16,14 +16,37 @@ function createPersonNode(person, id) {
   return el;
 }
 
-function buildFamilyTree(data) {
-  const used = new Set();
+function drawLine(svg, fromEl, toEl) {
+  const fromRect = fromEl.getBoundingClientRect();
+  const toRect = toEl.getBoundingClientRect();
+  const svgRect = svg.getBoundingClientRect();
+
+  const x1 = fromRect.left + fromRect.width / 2 - svgRect.left;
+  const y1 = fromRect.bottom - svgRect.top;
+  const x2 = toRect.left + toRect.width / 2 - svgRect.left;
+  const y2 = toRect.top - svgRect.top;
+
+  const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+  line.setAttribute("x1", x1);
+  line.setAttribute("y1", y1);
+  line.setAttribute("x2", x2);
+  line.setAttribute("y2", y2);
+  line.setAttribute("stroke", "#333");
+  line.setAttribute("stroke-width", "2");
+  svg.appendChild(line);
+}
+
+function buildFamilyTree(data, svg) {
+  const rendered = new Set();
+  const idToElement = {};
   const tree = [];
 
   function buildGen(parents) {
     const generation = [];
 
     parents.forEach(([id1, id2]) => {
+      if (rendered.has(id1) && (!id2 || rendered.has(id2))) return;
+
       const parent1 = data[id1];
       const parent2 = id2 ? data[id2] : null;
       if (!parent1) return;
@@ -35,13 +58,15 @@ function buildFamilyTree(data) {
       parentsDiv.className = 'parents';
 
       const el1 = createPersonNode(parent1, id1);
-      used.add(id1);
+      idToElement[id1] = el1;
+      rendered.add(id1);
       parentsDiv.appendChild(el1);
 
       if (parent2 && data[parent2]) {
         const el2 = createPersonNode(data[parent2], id2);
+        idToElement[id2] = el2;
+        rendered.add(id2);
         parentsDiv.appendChild(el2);
-        used.add(id2);
       }
 
       familyDiv.appendChild(parentsDiv);
@@ -53,12 +78,13 @@ function buildFamilyTree(data) {
       const nextGenParents = [];
 
       children.forEach(cid => {
-        if (used.has(cid)) return;
+        if (rendered.has(cid)) return;
         const child = data[cid];
         if (!child) return;
         const childEl = createPersonNode(child, cid);
         childrenDiv.appendChild(childEl);
-        used.add(cid);
+        idToElement[cid] = childEl;
+        rendered.add(cid);
 
         const spouse = child.relations.spouse;
         nextGenParents.push([cid.toString(), spouse ? spouse.toString() : null]);
@@ -68,7 +94,7 @@ function buildFamilyTree(data) {
         familyDiv.appendChild(childrenDiv);
       }
 
-      generation.push(familyDiv);
+      generation.push({ familyDiv, parentIds: [id1, id2], childIds: children });
 
       if (nextGenParents.length > 0) {
         const childGen = buildGen(nextGenParents);
@@ -81,7 +107,7 @@ function buildFamilyTree(data) {
     return generation;
   }
 
-  // Start from top-level ancestors (those who are not children)
+  // Find root people (those who are not children)
   const allChildren = new Set();
   for (const person of Object.values(data)) {
     (person.relations.children || []).forEach(cid => allChildren.add(cid.toString()));
@@ -98,20 +124,38 @@ function buildFamilyTree(data) {
   const firstGen = buildGen(rootPairs);
   if (firstGen.length) tree.push(firstGen);
 
-  return tree;
+  return { tree, idToElement };
 }
 
 window.onload = async () => {
   const data = await fetchData();
   const treeContainer = document.getElementById('tree');
-  const generations = buildFamilyTree(data);
+  const svg = document.querySelector('.connector-lines');
 
-  generations.forEach(generation => {
+  const { tree, idToElement } = buildFamilyTree(data, svg);
+
+  tree.forEach(generation => {
     const genDiv = document.createElement('div');
     genDiv.className = 'generation';
-    generation.forEach(family => {
-      genDiv.appendChild(family);
+    generation.forEach(fam => {
+      genDiv.appendChild(fam.familyDiv);
     });
     treeContainer.appendChild(genDiv);
+  });
+
+  // Wait for layout, then draw lines
+  requestAnimationFrame(() => {
+    tree.forEach(generation => {
+      generation.forEach(fam => {
+        const [p1, p2] = fam.parentIds;
+        fam.childIds.forEach(cid => {
+          if (idToElement[p1] && idToElement[cid]) {
+            drawLine(svg, idToElement[p1], idToElement[cid]);
+          } else if (p2 && idToElement[p2] && idToElement[cid]) {
+            drawLine(svg, idToElement[p2], idToElement[cid]);
+          }
+        });
+      });
+    });
   });
 };
