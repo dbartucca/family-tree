@@ -36,59 +36,41 @@ function drawLine(svg, fromEl, toEl) {
   svg.appendChild(line);
 }
 
-function assignGenerationsBottomUp(data) {
+function assignGenerationsRecursive(data) {
   const generations = {};
-  const childToParents = {};
-  const parentsToChildren = {};
-
-  // Build reverse index
-  Object.entries(data).forEach(([id, person]) => {
-    (person.relations.children || []).forEach(cid => {
-      const childId = cid.toString();
-      if (!childToParents[childId]) childToParents[childId] = new Set();
-      childToParents[childId].add(id);
-
-      if (!parentsToChildren[id]) parentsToChildren[id] = new Set();
-      parentsToChildren[id].add(childId);
-    });
-  });
-
-  // Start with leaf nodes (no children)
-  const toVisit = Object.keys(data).filter(id => !parentsToChildren[id]);
-
   const visited = new Set();
-  while (toVisit.length > 0) {
-    const id = toVisit.shift();
-    if (visited.has(id)) continue;
 
+  function computeGeneration(id) {
+    if (generations[id] !== undefined) return generations[id];
     const person = data[id];
-    const gen = generations[id] ?? 0;
+    if (!person) return 0;
 
-    // Assign to parents: parentGen = max(childGen + 1)
-    const mother = person.relations.mother?.toString();
-    const father = person.relations.father?.toString();
-
-    [mother, father].forEach(pid => {
-      if (!pid || !data[pid]) return;
-      const newGen = gen + 1;
-      if (generations[pid] === undefined || generations[pid] < newGen) {
-        generations[pid] = newGen;
-        toVisit.push(pid);
+    const children = person.relations.children || [];
+    if (children.length === 0) {
+      generations[id] = 0;
+    } else {
+      let maxChildGen = 0;
+      for (const cid of children) {
+        const childGen = computeGeneration(cid.toString());
+        maxChildGen = Math.max(maxChildGen, childGen);
       }
-    });
+      generations[id] = maxChildGen + 1;
+    }
 
-    // Assign to spouse (match generation)
-    const spouse = person.relations.spouse?.toString();
-    if (spouse && data[spouse]) {
-      if (generations[spouse] === undefined || generations[spouse] < gen) {
-        generations[spouse] = gen;
-        toVisit.push(spouse);
+    // Ensure spouse has same generation
+    const spouseId = person.relations.spouse?.toString();
+    if (spouseId && data[spouseId]) {
+      const spouseGen = generations[spouseId];
+      if (spouseGen === undefined || spouseGen < generations[id]) {
+        generations[spouseId] = generations[id];
+        computeGeneration(spouseId); // recurse to ensure consistency
       }
     }
 
-    visited.add(id);
+    return generations[id];
   }
 
+  Object.keys(data).forEach(id => computeGeneration(id));
   return generations;
 }
 
@@ -98,7 +80,7 @@ function renderTree(data) {
   container.innerHTML = "";
   svg.innerHTML = "";
 
-  const generations = assignGenerationsBottomUp(data);
+  const generations = assignGenerationsRecursive(data);
   const genGroups = {};
 
   for (const [id, level] of Object.entries(generations)) {
