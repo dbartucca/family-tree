@@ -5,42 +5,58 @@
   <title>Family Tree Viewer</title>
   <style>
     body {
-      font-family: sans-serif;
+      font-family: Arial, sans-serif;
       margin: 0;
-      padding: 0;
-      background: #f7f7f7;
+      background: #f4f4f4;
     }
-    #tree {
-      padding: 20px;
+
+    .tree-container {
+      position: relative;
+      padding: 40px;
       overflow-x: auto;
-      white-space: nowrap;
     }
+
     .person {
-      display: inline-block;
       background: white;
       border: 1px solid #ccc;
-      border-radius: 8px;
+      border-radius: 10px;
       padding: 10px;
-      margin: 5px;
-      min-width: 140px;
+      margin: 10px;
+      min-width: 150px;
       text-align: center;
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      display: inline-block;
     }
-    .connector {
-      height: 20px;
-      border-left: 2px solid #999;
-      margin: 0 auto;
-    }
-    .children {
+
+    .level {
       display: flex;
       justify-content: center;
-      flex-wrap: wrap;
+      align-items: flex-start;
+      margin-bottom: 60px;
+    }
+
+    svg.connector-lines {
+      position: absolute;
+      top: 0;
+      left: 0;
+      overflow: visible;
+      z-index: 0;
+    }
+
+    .person .photo {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: #ccc;
+      margin: 0 auto 10px;
     }
   </style>
 </head>
 <body>
   <h2 style="text-align:center;">Family Tree</h2>
-  <div id="tree"></div>
+  <div class="tree-container" id="tree">
+    <svg class="connector-lines"></svg>
+  </div>
 
   <script src="script.js"></script>
 </body>
