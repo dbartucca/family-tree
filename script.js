@@ -12,40 +12,13 @@ function createPersonCard(person, id) {
   div.id = `person-${id}`;
   div.dataset.id = id;
 
-  const toggle = document.createElement('button');
-  toggle.textContent = "−";
-  toggle.className = "toggle";
-  toggle.onclick = () => {
-    const isCollapsed = toggle.textContent === "−";
-    toggle.textContent = isCollapsed ? "+" : "−";
-    toggleDescendants(id, isCollapsed);
-  };
-
   div.innerHTML = `
     <div class="photo"></div>
     <strong>${person.name.first} ${person.name.middle || ''} ${person.name.last}</strong><br>
     <small>${person.birth.year || ''}</small><br>
     <em>${person.bio.desc}</em>
   `;
-  div.prepend(toggle);
   return div;
-}
-
-function toggleDescendants(id, shouldCollapse) {
-  const person = data[id];
-  if (!person || !person.relations.children) return;
-
-  person.relations.children.forEach(childId => {
-    const el = document.getElementById(`person-${childId}`);
-    const spouseId = data[childId].relations.spouse?.toString();
-    const spouseEl = spouseId ? document.getElementById(`person-${spouseId}`) : null;
-
-    if (el) el.style.display = shouldCollapse ? "none" : "";
-    if (spouseEl) spouseEl.style.display = shouldCollapse ? "none" : "";
-
-    // Recurse
-    toggleDescendants(childId.toString(), shouldCollapse);
-  });
 }
 
 function drawLine(svg, fromEl, toEl) {
@@ -198,7 +171,7 @@ function renderTree(data) {
 
       (person.relations.children || []).forEach(cid => {
         const childEl = idToEl[cid];
-        if (childEl && childEl.style.display !== "none") {
+        if (childEl) {
           drawLine(svg, parentEl, childEl);
         }
       });
