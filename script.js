@@ -36,41 +36,77 @@ function drawLine(svg, fromEl, toEl) {
   svg.appendChild(line);
 }
 
-function assignGenerationsRecursive(data) {
+function assignGenerations(data) {
   const generations = {};
-  const visited = new Set();
+  const constraints = [];
+  const childToParents = {};
 
-  function computeGeneration(id) {
-    if (generations[id] !== undefined) return generations[id];
-    const person = data[id];
-    if (!person) return 0;
-
+  // Build constraints:
+  for (const [id, person] of Object.entries(data)) {
+    // Parent → Child: parent = child + 1
     const children = person.relations.children || [];
-    if (children.length === 0) {
-      generations[id] = 0;
-    } else {
-      let maxChildGen = 0;
-      for (const cid of children) {
-        const childGen = computeGeneration(cid.toString());
-        maxChildGen = Math.max(maxChildGen, childGen);
-      }
-      generations[id] = maxChildGen + 1;
+    for (const cid of children) {
+      constraints.push({ above: id, below: cid.toString() });
+
+      // Track siblings
+      if (!childToParents[cid]) childToParents[cid] = [];
+      childToParents[cid].push(id);
     }
 
-    // Ensure spouse has same generation
+    // Spouse → Same Gen
     const spouseId = person.relations.spouse?.toString();
     if (spouseId && data[spouseId]) {
-      const spouseGen = generations[spouseId];
-      if (spouseGen === undefined || spouseGen < generations[id]) {
-        generations[spouseId] = generations[id];
-        computeGeneration(spouseId); // recurse to ensure consistency
+      constraints.push({ same: [id, spouseId] });
+    }
+  }
+
+  // Add sibling constraints: same generation
+  const siblingSets = {};
+  for (const [childId, parentList] of Object.entries(childToParents)) {
+    const key = parentList.sort().join("-");
+    siblingSets[key] = siblingSets[key] || [];
+    siblingSets[key].push(childId);
+  }
+  for (const siblings of Object.values(siblingSets)) {
+    for (let i = 0; i < siblings.length - 1; i++) {
+      constraints.push({ same: [siblings[i], siblings[i + 1]] });
+    }
+  }
+
+  // Assign initial gen = 0 to all
+  for (const id of Object.keys(data)) {
+    generations[id] = 0;
+  }
+
+  // Iteratively apply constraints until stable
+  let changed;
+  do {
+    changed = false;
+
+    for (const rule of constraints) {
+      if (rule.above && rule.below) {
+        const above = rule.above;
+        const below = rule.below;
+        const newAboveGen = generations[below] + 1;
+        if (generations[above] < newAboveGen) {
+          generations[above] = newAboveGen;
+          changed = true;
+        }
+      }
+
+      if (rule.same) {
+        const [a, b] = rule.same;
+        const maxGen = Math.max(generations[a], generations[b]);
+        if (generations[a] !== maxGen || generations[b] !== maxGen) {
+          generations[a] = maxGen;
+          generations[b] = maxGen;
+          changed = true;
+        }
       }
     }
 
-    return generations[id];
-  }
+  } while (changed);
 
-  Object.keys(data).forEach(id => computeGeneration(id));
   return generations;
 }
 
@@ -80,7 +116,7 @@ function renderTree(data) {
   container.innerHTML = "";
   svg.innerHTML = "";
 
-  const generations = assignGenerationsRecursive(data);
+  const generations = assignGenerations(data);
   const genGroups = {};
 
   for (const [id, level] of Object.entries(generations)) {
