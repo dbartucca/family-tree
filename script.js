@@ -66,6 +66,17 @@ function drawLines(svg, fromEl, toEl) {
   svg.appendChild(line);
 }
 
+function renderConnections(data, idToEl, svg) {
+  svg.innerHTML = ''; // Clear old lines
+  for (const [id, person] of Object.entries(data)) {
+    (person.relations.children || []).forEach(childId => {
+      if (idToEl[id] && idToEl[childId]) {
+        drawLines(svg, idToEl[id], idToEl[childId]);
+      }
+    });
+  }
+}
+
 window.onload = async () => {
   const data = await fetchData();
   const container = document.getElementById('tree');
@@ -85,14 +96,12 @@ window.onload = async () => {
     container.appendChild(levelDiv);
   });
 
-  // Wait for layout
-  requestAnimationFrame(() => {
-    for (const [id, person] of Object.entries(data)) {
-      (person.relations.children || []).forEach(childId => {
-        if (idToEl[id] && idToEl[childId]) {
-          drawLines(svg, idToEl[id], idToEl[childId]);
-        }
-      });
-    }
-  });
+  function updateLines() {
+    requestAnimationFrame(() => {
+      renderConnections(data, idToEl, svg);
+    });
+  }
+
+  updateLines(); // initial render
+  window.addEventListener('resize', updateLines); // redraw on resize
 };
