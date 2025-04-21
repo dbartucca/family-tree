@@ -172,9 +172,11 @@
   <!-- Load your tree script AFTER Panzoom is ready -->
   <script>
     window.addEventListener('load', () => {
-      const script = document.createElement('script');
-      script.src = 'script.js';
-      document.body.appendChild(script);
+      setTimeout(() => {
+        const script = document.createElement('script');
+        script.src = 'script.js';
+        document.body.appendChild(script);
+      }, 100); // delay to ensure layout
     });
   </script>
 </body>
