@@ -148,6 +148,7 @@
 </head>
 <body>
   <h2>Family Tree</h2>
+
   <div class="tree-container">
     <div id="panzoom-target">
       <svg class="lines"></svg>
@@ -155,6 +156,7 @@
     </div>
   </div>
 
+  <!-- Info Modal -->
   <div id="modal" class="modal">
     <div class="modal-content">
       <button class="close" onclick="document.getElementById('modal').style.display='none'">✖</button>
@@ -165,7 +167,10 @@
     </div>
   </div>
 
+  <!-- Load Panzoom first -->
   <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@9.4.0/dist/panzoom.min.js"></script>
+
+  <!-- Then load your script -->
   <script>
     const script = document.createElement('script');
     script.src = 'script.js';
