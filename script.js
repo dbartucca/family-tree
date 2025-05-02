@@ -1,7 +1,6 @@
 let data = {};
 let isFiltered = false;
 let activeFilterId = null;
-let idToEl = {};
 
 async function fetchData() {
   const response = await fetch('data.json');
@@ -15,6 +14,7 @@ function createPersonCard(person, id) {
   div.id = `person-${id}`;
   div.dataset.id = id;
 
+  // Filter icon
   const filterBtn = document.createElement('button');
   filterBtn.className = 'filter-icon';
   filterBtn.innerHTML = '👁️';
@@ -31,6 +31,8 @@ function createPersonCard(person, id) {
     <em>${person.bio.desc}</em>
   `;
   div.appendChild(filterBtn);
+
+  // Info modal trigger
   div.onclick = () => openModal(id);
 
   return div;
@@ -196,6 +198,8 @@ function assignGenerations(data) {
   return generations;
 }
 
+let idToEl = {};
+
 function drawAllLines() {
   const svg = document.querySelector("svg.lines");
   svg.innerHTML = "";
@@ -271,4 +275,22 @@ function renderTree(data) {
   }
 
   drawAllLines();
+  window.addEventListener("resize", drawAllLines);
 }
+
+window.onload = async () => {
+  await fetchData();
+  renderTree(data);
+
+  const panzoomScript = document.createElement('script');
+  panzoomScript.src = "https://cdn.jsdelivr.net/npm/@panzoom/panzoom@9.4.0/dist/panzoom.min.js";
+  panzoomScript.onload = () => {
+    const el = document.querySelector('.tree-container');
+    Panzoom(el, {
+      maxScale: 2,
+      minScale: 0.5,
+      contain: 'outside'
+    });
+  };
+  document.body.appendChild(panzoomScript);
+};
