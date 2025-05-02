@@ -14,18 +14,9 @@
     .tree-container {
       position: relative;
       padding: 50px;
-      overflow: hidden;
+      overflow: auto;
       width: 100vw;
       height: 100vh;
-      cursor: grab;
-      touch-action: none;
-    }
-
-    #panzoom-target {
-      transform-origin: 0 0;
-      position: relative;
-      min-width: 2000px;
-      min-height: 1500px;
     }
 
     svg.lines {
@@ -99,6 +90,7 @@
       margin: 20px 0;
     }
 
+    /* Info Modal */
     .modal {
       display: none;
       position: fixed;
@@ -148,14 +140,12 @@
 </head>
 <body>
   <h2>Family Tree</h2>
-
   <div class="tree-container">
-    <div id="panzoom-target">
-      <svg class="lines"></svg>
-      <div id="tree-root"></div>
-    </div>
+    <svg class="lines"></svg>
+    <div id="tree-root"></div>
   </div>
 
+  <!-- Info Modal -->
   <div id="modal" class="modal">
     <div class="modal-content">
       <button class="close" onclick="document.getElementById('modal').style.display='none'">✖</button>
@@ -166,18 +156,7 @@
     </div>
   </div>
 
-  <!-- Load Panzoom -->
-  <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@9.4.0/dist/panzoom.min.js"></script>
-
-  <!-- Load your tree script AFTER Panzoom is ready -->
-  <script>
-    window.addEventListener('load', () => {
-      setTimeout(() => {
-        const script = document.createElement('script');
-        script.src = 'script.js';
-        document.body.appendChild(script);
-      }, 100); // delay to ensure layout
-    });
-  </script>
+  <!-- Load tree logic -->
+  <script src="script.js"></script>
 </body>
 </html>
