@@ -1,6 +1,5 @@
 let data = {};
-let isFiltered = false;
-let activeFilterId = null;
+let idToEl = {};
 
 async function fetchData() {
   const response = await fetch('data.json');
@@ -14,11 +13,9 @@ function createPersonCard(person, id) {
   div.id = `person-${id}`;
   div.dataset.id = id;
 
-  // Filter icon
   const filterBtn = document.createElement('button');
   filterBtn.className = 'filter-icon';
   filterBtn.innerHTML = '👁️';
-  filterBtn.title = 'Focus on this person';
   filterBtn.onclick = (e) => {
     e.stopPropagation();
     toggleFilter(id, filterBtn);
@@ -32,7 +29,6 @@ function createPersonCard(person, id) {
   `;
   div.appendChild(filterBtn);
 
-  // Info modal trigger
   div.onclick = () => openModal(id);
 
   return div;
@@ -45,12 +41,10 @@ function openModal(id) {
   document.getElementById('modal-name').textContent =
     `${person.name.first} ${person.name.middle || ''} ${person.name.last}`;
   document.getElementById('modal-bio').textContent = person.bio.desc || '';
-
   const birth = person.birth;
   document.getElementById('modal-birth').textContent = birth
     ? `Born: ${birth.month}/${birth.day}/${birth.year} in ${birth.city}, ${birth.state}, ${birth.country}`
     : '';
-
   const death = person.death;
   document.getElementById('modal-death').textContent = death
     ? `Died: ${death.month}/${death.day}/${death.year} in ${death.city}, ${death.state}, ${death.country}`
@@ -61,54 +55,32 @@ function openModal(id) {
 
 function toggleFilter(newId, clickedBtn) {
   const allBtns = document.querySelectorAll('.filter-icon');
+  const isActive = clickedBtn.classList.contains('active');
 
-  if (isFiltered && newId === activeFilterId) {
-    document.querySelectorAll('.person').forEach(el => (el.style.display = ''));
-    allBtns.forEach(btn => btn.classList.remove('active'));
-    isFiltered = false;
-    activeFilterId = null;
+  allBtns.forEach(btn => btn.classList.remove('active'));
+  if (isActive) {
+    document.querySelectorAll('.person').forEach(el => el.style.display = '');
     drawAllLines();
     return;
   }
 
-  activeFilterId = newId;
-  isFiltered = true;
-  allBtns.forEach(btn => btn.classList.remove('active'));
   clickedBtn.classList.add('active');
+  const visible = new Set();
 
-  const toShow = new Set();
-
-  function walkAncestors(id) {
-    const person = data[id];
-    if (!person) return;
-    toShow.add(id);
-    const mother = person.relations.mother?.toString();
-    const father = person.relations.father?.toString();
-    if (mother) walkAncestors(mother);
-    if (father) walkAncestors(father);
+  function walk(id) {
+    if (!id || visible.has(id)) return;
+    visible.add(id);
+    const p = data[id];
+    p.relations.children?.forEach(cid => walk(cid.toString()));
+    if (p.relations.father) walk(p.relations.father.toString());
+    if (p.relations.mother) walk(p.relations.mother.toString());
+    if (p.relations.spouse) visible.add(p.relations.spouse.toString());
   }
 
-  function walkDescendants(id) {
-    const person = data[id];
-    if (!person) return;
-    toShow.add(id);
-    const children = person.relations.children || [];
-    for (const childId of children) {
-      toShow.add(childId.toString());
-      const spouse = data[childId]?.relations.spouse?.toString();
-      if (spouse) toShow.add(spouse);
-      walkDescendants(childId.toString());
-    }
-  }
-
-  const spouse = data[newId].relations.spouse?.toString();
-  if (spouse) toShow.add(spouse);
-  walkAncestors(newId);
-  walkDescendants(newId);
+  walk(newId);
 
   document.querySelectorAll('.person').forEach(el => {
-    const id = el.dataset.id;
-    el.style.display = toShow.has(id) ? '' : 'none';
+    el.style.display = visible.has(el.dataset.id) ? '' : 'none';
   });
 
   drawAllLines();
@@ -136,59 +108,24 @@ function drawLine(svg, fromEl, toEl) {
 
 function assignGenerations(data) {
   const generations = {};
-  const constraints = [];
-  const childToParents = {};
-
-  for (const [id, person] of Object.entries(data)) {
-    const children = person.relations.children || [];
-    for (const cid of children) {
-      constraints.push({ above: id, below: cid.toString() });
-      if (!childToParents[cid]) childToParents[cid] = [];
-      childToParents[cid].push(id);
-    }
-
-    const spouseId = person.relations.spouse?.toString();
-    if (spouseId && data[spouseId]) {
-      constraints.push({ same: [id, spouseId] });
-    }
-  }
-
-  const siblingSets = {};
-  for (const [childId, parentList] of Object.entries(childToParents)) {
-    const key = parentList.sort().join("-");
-    siblingSets[key] = siblingSets[key] || [];
-    siblingSets[key].push(childId);
-  }
-  for (const siblings of Object.values(siblingSets)) {
-    for (let i = 0; i < siblings.length - 1; i++) {
-      constraints.push({ same: [siblings[i], siblings[i + 1]] });
-    }
-  }
-
-  for (const id of Object.keys(data)) {
-    generations[id] = 0;
-  }
+  for (const id in data) generations[id] = 0;
 
   let changed;
   do {
     changed = false;
-    for (const rule of constraints) {
-      if (rule.above && rule.below) {
-        const above = rule.above;
-        const below = rule.below;
-        const newAboveGen = generations[below] + 1;
-        if (generations[above] < newAboveGen) {
-          generations[above] = newAboveGen;
+    for (const id in data) {
+      const p = data[id];
+      (p.relations.children || []).forEach(cid => {
+        if (generations[id] <= generations[cid]) {
+          generations[id] = generations[cid] + 1;
           changed = true;
         }
-      }
-
-      if (rule.same) {
-        const [a, b] = rule.same;
-        const maxGen = Math.max(generations[a], generations[b]);
-        if (generations[a] !== maxGen || generations[b] !== maxGen) {
-          generations[a] = maxGen;
-          generations[b] = maxGen;
+      });
+      const spouse = p.relations.spouse?.toString();
+      if (spouse) {
+        const maxGen = Math.max(generations[id], generations[spouse]);
+        if (generations[id] !== maxGen || generations[spouse] !== maxGen) {
+          generations[id] = generations[spouse] = maxGen;
           changed = true;
         }
       }
@@ -198,20 +135,17 @@ function assignGenerations(data) {
   return generations;
 }
 
-let idToEl = {};
-
 function drawAllLines() {
   const svg = document.querySelector("svg.lines");
   svg.innerHTML = "";
-
   for (const [id, person] of Object.entries(data)) {
-    const parentEl = idToEl[id];
-    if (!parentEl || parentEl.style.display === "none") continue;
-
+    const el = idToEl[id];
+    if (!el || el.style.display === 'none') continue;
     (person.relations.children || []).forEach(cid => {
       const childEl = idToEl[cid];
-      if (!childEl || childEl.style.display === "none") return;
-      drawLine(svg, parentEl, childEl);
+      if (childEl && childEl.style.display !== 'none') {
+        drawLine(svg, el, childEl);
+      }
     });
   }
 }
@@ -223,54 +157,41 @@ function renderTree(data) {
   svg.innerHTML = "";
 
   const generations = assignGenerations(data);
-  const genGroups = {};
-
-  for (const [id, level] of Object.entries(generations)) {
-    if (!genGroups[level]) genGroups[level] = new Set();
-    genGroups[level].add(id);
+  const levels = {};
+  for (const [id, gen] of Object.entries(generations)) {
+    if (!levels[gen]) levels[gen] = new Set();
+    levels[gen].add(id);
   }
 
   idToEl = {};
-  const sortedLevels = Object.keys(genGroups).map(Number).sort((a, b) => b - a);
-
-  for (const level of sortedLevels) {
-    const ids = genGroups[level];
+  const sorted = Object.keys(levels).map(Number).sort((a, b) => b - a);
+  for (const level of sorted) {
     const row = document.createElement("div");
     row.className = "generation";
-
-    const rendered = new Set();
-
-    for (const id of ids) {
-      if (rendered.has(id)) continue;
-
+    for (const id of levels[level]) {
       const person = data[id];
       const spouseId = person.relations.spouse?.toString();
+      const block = document.createElement("div");
+      block.className = "family-block";
 
-      const wrapper = document.createElement("div");
-      wrapper.className = "family-block";
-
-      if (spouseId && ids.has(spouseId) && !rendered.has(spouseId)) {
+      if (spouseId && levels[level].has(spouseId)) {
         const pair = document.createElement("div");
         pair.className = "spouse-pair";
         const el1 = createPersonCard(person, id);
         const el2 = createPersonCard(data[spouseId], spouseId);
         pair.appendChild(el1);
         pair.appendChild(el2);
+        block.appendChild(pair);
         idToEl[id] = el1;
         idToEl[spouseId] = el2;
-        rendered.add(id);
-        rendered.add(spouseId);
-        wrapper.appendChild(pair);
       } else {
         const el = createPersonCard(person, id);
+        block.appendChild(el);
         idToEl[id] = el;
-        rendered.add(id);
-        wrapper.appendChild(el);
       }
 
-      row.appendChild(wrapper);
+      row.appendChild(block);
     }
-
     container.appendChild(row);
   }
 
@@ -286,11 +207,8 @@ window.onload = async () => {
   panzoomScript.src = "https://cdn.jsdelivr.net/npm/@panzoom/panzoom@9.4.0/dist/panzoom.min.js";
   panzoomScript.onload = () => {
     const el = document.querySelector('.tree-container');
-    Panzoom(el, {
-      maxScale: 2,
-      minScale: 0.5,
-      contain: 'outside'
-    });
+    const panzoom = Panzoom(el, { maxScale: 2, minScale: 0.5, contain: 'outside' });
+    el.addEventListener('wheel', panzoom.zoomWithWheel);
   };
   document.body.appendChild(panzoomScript);
 };
