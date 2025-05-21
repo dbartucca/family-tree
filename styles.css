@@ -1,82 +1,73 @@
 body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: #f4f4f4;
+  font-family: sans-serif;
+  margin: 0;
+  overflow: hidden;
 }
-
 h1 {
-    text-align: center;
-    padding: 20px;
-    background-color: #333;
-    color: white;
+  text-align: center;
 }
-
-#family-tree {
-    display: flex;
-    justify-content: center;
-    margin-top: 20px;
-}
-
 .tree-container {
-    position: relative;
-    max-width: 100%;
-    overflow: hidden;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
 }
-
-.family-member {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin: 20px;
+svg.lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
-
-.family-member-box {
-    width: 150px;
-    height: 100px;
-    background-color: #fff;
-    border: 2px solid #333;
-    border-radius: 5px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 10px;
-    text-align: center;
-    position: relative;
+#generation, .generation {
+  display: flex;
+  justify-content: center;
+  margin: 40px 0;
 }
-
-.family-member .info-card {
-    width: 250px;
-    padding: 10px;
-    background-color: #fff;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    position: absolute;
-    top: 0;
-    left: 0;
-    transform: translateY(-100%);
-    transition: transform 0.3s ease;
+.person {
+  border: 1px solid #aaa;
+  padding: 8px;
+  margin: 5px;
+  background: #fdfdfd;
+  position: relative;
+  cursor: pointer;
 }
-
-.family-member:hover .info-card {
-    transform: translateY(0);
+.spouse-pair {
+  display: flex;
+  gap: 10px;
 }
-
-.line {
-    position: absolute;
-    width: 2px;
-    background-color: #333;
-    transition: height 0.3s ease;
+.filter-icon {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
 }
-
-button {
-    margin-top: 10px;
-    padding: 5px 10px;
-    background-color: #333;
-    color: white;
-    border: none;
-    cursor: pointer;
+.filter-icon.active {
+  color: red;
 }
-
-button:hover {
-    background-color: #555;
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 10;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0,0,0,0.6);
+}
+.modal-content {
+  background-color: #fff;
+  margin: 10% auto;
+  padding: 20px;
+  width: 80%;
+  max-width: 400px;
+}
+.close {
+  float: right;
+  font-size: 28px;
+  cursor: pointer;
 }
