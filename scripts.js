@@ -1,56 +1,45 @@
 let rawData;
-let childrenMap = {};
+let simulation;
+let svg, g;
 
 fetch("family-tree.json")
   .then(res => res.json())
   .then(data => {
     rawData = data;
-    childrenMap = buildChildrenMap(data);
-    const rootId = findRoot(data);
-    renderTree(rootId);
+    buildGraph();
     setupSearch();
   });
 
-function buildChildrenMap(data) {
-  const map = {};
-  Object.keys(data).forEach(id => {
-    const { mother, father } = data[id].relationships;
+function buildGraph() {
 
-    [mother, father].forEach(parent => {
-      if (!parent) return;
-      if (!map[parent]) map[parent] = [];
-      map[parent].push(id);
+  const nodes = [];
+  const links = [];
+
+  Object.keys(rawData).forEach(id => {
+    const p = rawData[id];
+
+    nodes.push({
+      id: id,
+      name: p.name.first + " " + p.name.last,
+      data: p
     });
+
+    const rel = p.relationships;
+
+    if (rel.mother)
+      links.push({ source: rel.mother, target: id, type: "parent" });
+
+    if (rel.father)
+      links.push({ source: rel.father, target: id, type: "parent" });
+
+    if (rel.spouse)
+      links.push({ source: id, target: rel.spouse, type: "spouse" });
   });
-  return map;
-}
 
-function findRoot(data) {
-  return Object.keys(data).find(id =>
-    !data[id].relationships.mother &&
-    !data[id].relationships.father
-  );
-}
-
-function buildHierarchy(id) {
-  const person = rawData[id];
-  if (!person) return null;
-
-  return {
-    id: id,
-    name: person.name.first + " " + person.name.last,
-    data: person,
-    children: (childrenMap[id] || []).map(childId => buildHierarchy(childId))
-  };
-}
-
-function renderTree(rootId) {
   const width = window.innerWidth;
   const height = window.innerHeight;
 
-  d3.select("#tree").selectAll("*").remove();
-
-  const svg = d3.select("#tree")
+  svg = d3.select("#graph")
     .append("svg")
     .attr("width", width)
     .attr("height", height)
@@ -58,38 +47,69 @@ function renderTree(rootId) {
       g.attr("transform", event.transform);
     }));
 
-  const g = svg.append("g");
+  g = svg.append("g");
 
-  const root = d3.hierarchy(buildHierarchy(rootId));
-  const treeLayout = d3.tree().size([width - 200, height - 200]);
-  treeLayout(root);
+  simulation = d3.forceSimulation(nodes)
+    .force("link", d3.forceLink(links)
+      .id(d => d.id)
+      .distance(d => d.type === "spouse" ? 50 : 120)
+    )
+    .force("charge", d3.forceManyBody().strength(-300))
+    .force("center", d3.forceCenter(width / 2, height / 2))
+    .force("collision", d3.forceCollide().radius(40));
 
-  // links
-  g.selectAll(".link")
-    .data(root.links())
+  const link = g.selectAll(".link")
+    .data(links)
     .enter()
-    .append("path")
-    .attr("class", "link")
-    .attr("d", d3.linkVertical()
-      .x(d => d.x)
-      .y(d => d.y));
+    .append("line")
+    .attr("class", d => d.type === "spouse" ? "link-spouse" : "link-parent");
 
-  // nodes
   const node = g.selectAll(".node")
-    .data(root.descendants())
+    .data(nodes)
     .enter()
     .append("g")
     .attr("class", "node")
-    .attr("transform", d => `translate(${d.x},${d.y})`)
-    .on("click", (event, d) => showModal(d.data.data));
+    .call(d3.drag()
+      .on("start", dragStarted)
+      .on("drag", dragged)
+      .on("end", dragEnded)
+    )
+    .on("click", (event, d) => showModal(d.data));
 
   node.append("circle")
-    .attr("r", 20);
+    .attr("r", 25);
 
   node.append("text")
-    .attr("dy", 40)
     .attr("text-anchor", "middle")
-    .text(d => d.data.name);
+    .attr("dy", 40)
+    .text(d => d.name);
+
+  simulation.on("tick", () => {
+    link
+      .attr("x1", d => d.source.x)
+      .attr("y1", d => d.source.y)
+      .attr("x2", d => d.target.x)
+      .attr("y2", d => d.target.y);
+
+    node.attr("transform", d => `translate(${d.x},${d.y})`);
+  });
+}
+
+function dragStarted(event, d) {
+  if (!event.active) simulation.alphaTarget(0.3).restart();
+  d.fx = d.x;
+  d.fy = d.y;
+}
+
+function dragged(event, d) {
+  d.fx = event.x;
+  d.fy = event.y;
+}
+
+function dragEnded(event, d) {
+  if (!event.active) simulation.alphaTarget(0);
+  d.fx = null;
+  d.fy = null;
 }
 
 function showModal(person) {
@@ -110,14 +130,16 @@ function setupSearch() {
   document.getElementById("search").addEventListener("input", e => {
     const value = e.target.value.toLowerCase();
 
-    const match = Object.keys(rawData).find(id => {
-      const p = rawData[id];
-      return (
-        p.name.first.toLowerCase().includes(value) ||
-        p.name.last.toLowerCase().includes(value)
+    g.selectAll(".node circle")
+      .attr("fill", d =>
+        d.name.toLowerCase().includes(value) ? "#ffcc00" : "#ffffff"
       );
-    });
-
-    if (match) renderTree(match);
   });
+}
+
+function resetView() {
+  svg.transition().duration(750).call(
+    d3.zoom().transform,
+    d3.zoomIdentity
+  );
 }
