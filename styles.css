@@ -1,40 +1,53 @@
 body {
-  font-family: Arial;
   margin: 0;
+  font-family: Arial;
   overflow: hidden;
 }
 
-#tree {
+#controls {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 10;
+  background: white;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+#graph {
   width: 100vw;
   height: 100vh;
 }
 
 .node circle {
-  fill: #fff;
+  fill: #ffffff;
   stroke: #333;
   stroke-width: 2px;
 }
 
 .node text {
-  font-size: 12px;
+  font-size: 11px;
+  pointer-events: none;
 }
 
-.link {
-  fill: none;
-  stroke: #ccc;
+.link-parent {
+  stroke: #999;
   stroke-width: 2px;
+}
+
+.link-spouse {
+  stroke: #cc0000;
+  stroke-width: 2px;
+  stroke-dasharray: 5 3;
 }
 
 #modal {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   background: rgba(0,0,0,.6);
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
 }
 
 #modal.hidden {
@@ -45,5 +58,5 @@ body {
   background: white;
   padding: 20px;
   border-radius: 10px;
-  max-width: 400px;
+  width: 350px;
 }
