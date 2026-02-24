@@ -1,23 +1,49 @@
 body {
   font-family: Arial;
+  margin: 0;
+  overflow: hidden;
 }
 
-#tree-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
+#tree {
+  width: 100vw;
+  height: 100vh;
 }
 
-.person {
-  border: 1px solid #ccc;
-  padding: 10px;
-  width: 150px;
-  text-align: center;
-  border-radius: 8px;
-  cursor: pointer;
+.node circle {
+  fill: #fff;
+  stroke: #333;
+  stroke-width: 2px;
 }
 
-.person img {
+.node text {
+  font-size: 12px;
+}
+
+.link {
+  fill: none;
+  stroke: #ccc;
+  stroke-width: 2px;
+}
+
+#modal {
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 100%;
-  border-radius: 8px;
+  height: 100%;
+  background: rgba(0,0,0,.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#modal.hidden {
+  display: none;
+}
+
+#modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  max-width: 400px;
 }
