@@ -1,73 +1,23 @@
 body {
-  font-family: sans-serif;
-  margin: 0;
-  overflow: hidden;
+  font-family: Arial;
 }
-h1 {
-  text-align: center;
-}
-.tree-container {
-  width: 100%;
-  height: 100vh;
-  overflow: hidden;
-  position: relative;
-}
-svg.lines {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-}
-#generation, .generation {
+
+#tree-container {
   display: flex;
-  justify-content: center;
-  margin: 40px 0;
+  flex-wrap: wrap;
+  gap: 20px;
 }
+
 .person {
-  border: 1px solid #aaa;
-  padding: 8px;
-  margin: 5px;
-  background: #fdfdfd;
-  position: relative;
+  border: 1px solid #ccc;
+  padding: 10px;
+  width: 150px;
+  text-align: center;
+  border-radius: 8px;
   cursor: pointer;
 }
-.spouse-pair {
-  display: flex;
-  gap: 10px;
-}
-.filter-icon {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  background: none;
-  border: none;
-  cursor: pointer;
-}
-.filter-icon.active {
-  color: red;
-}
-.modal {
-  display: none;
-  position: fixed;
-  z-index: 10;
-  left: 0;
-  top: 0;
+
+.person img {
   width: 100%;
-  height: 100%;
-  overflow: auto;
-  background-color: rgba(0,0,0,0.6);
-}
-.modal-content {
-  background-color: #fff;
-  margin: 10% auto;
-  padding: 20px;
-  width: 80%;
-  max-width: 400px;
-}
-.close {
-  float: right;
-  font-size: 28px;
-  cursor: pointer;
+  border-radius: 8px;
 }
